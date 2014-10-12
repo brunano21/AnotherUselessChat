@@ -1,6 +1,39 @@
 extends layout
 
 block content
-    .jumbotron
-        h1= title
-        p Welcome to #{title}
+    script(src="/socket.io/socket.io.js")
+    script.
+        var socket = io.connect('http://localhost:3000');
+    navBar
+       nav(class='navbar navbar-default', role='navigation')
+           .container-fluid
+               .navbar-header
+                   button(class='navbar-toggle', data-toggle='collapse', data-target='#bs-example-navbar-collapse-1')
+                       span.sronly
+                       span.icon-bar
+                       span.icon-bar
+                       span.icon-bar
+                   a(class='navbar-brand', href='/#') Available Devices
+               #bs-example-navbar-collapse-1(class='collapse navbar-collapse')
+                   ul(class='nav navbar-nav')
+                       li
+                           a(href='/all') All
+                       li
+                           a(href='/phones') Phones
+                       li
+                           a(href='/tablets') Tablets
+    .col-md-8
+        .jumbotron
+            h1= title
+            p Welcome to #{title}
+    chat
+        .container-fluid
+            .col-md-8
+                ul(class='list-group')
+                li(class='list-group-item') prova
+                li(class='list-group-item') prova
+                li(class='list-group-item') prova
+                li(class='list-group-item') prova
+                li(class='list-group-item') prova
+                li(class='list-group-item') prova
+                li(class='list-group-item') prova

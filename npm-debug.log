@@ -21,7 +21,7 @@
 10 error There is likely additional logging output above.
 11 error System Darwin 13.4.0
 12 error command "/usr/local/Cellar/node/0.10.25/bin/node" "/usr/local/bin/npm" "start"
-13 error cwd /Users/nino/Documents/Dev/br1Project/newApp
+13 error cwd /Users/nino/Documents/Dev/br1Project/nodeProject
 14 error node -v v0.10.25
 15 error npm -v 1.3.24
 16 error code ELIFECYCLE
