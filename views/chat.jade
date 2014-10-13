@@ -1,0 +1,41 @@
+extends layout
+
+block content
+    script(src='/javascripts/chat.js')
+    script(src="http://code.jquery.com/jquery-1.11.1.js")
+    script(src="/socket.io/socket.io.js")
+    navBar
+       nav(class='navbar navbar-default', role='navigation')
+           .container-fluid
+               .navbar-header
+                   button(class='navbar-toggle', data-toggle='collapse', data-target='#bs-example-navbar-collapse-1')
+                       span.sronly
+                       span.icon-bar
+                       span.icon-bar
+                       span.icon-bar
+                   a(class='navbar-brand', href='/#') Available Devices
+               #bs-example-navbar-collapse-1(class='collapse navbar-collapse')
+                   ul(class='nav navbar-nav')
+                       li
+                           a(href='/login') Login
+    .col-md-8
+        .jumbotron
+            h1= title
+            p Welcome to #{title}
+    #chat
+        .container-fluid
+            .col-md-8
+                #content(style='width: 500px; height: 300px; margin: 0 0 20px 0; border: solid 1px #999; overflow-y: scroll;')
+            .col-md-8
+                .controls
+                    input(
+                    id='field',
+                    type='field',
+                    style='width:350px;',
+                    value=""
+                    )
+                    input(
+                    id='send',
+                    type='button',
+                    value='send'
+                    )

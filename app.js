@@ -66,10 +66,13 @@ var server = app.listen(app.get('port'), function() {
 var io = require('socket.io').listen(server);
 
 io.sockets.on('connection', function (socket) {
-    socket.emit('news', { hello: 'world' });
-    socket.on('my other event', function (data) {
-        console.log(data);
-    });
+    socket.on('sendMsg', function (data){
+                  socket.emit('message',data);
+                  console.log(data);
+              });
+    socket.on('disconnect', function(){
+                  console.log("user disconnected");
+              });
     console.log("socket.io initialized!");
 });
 
