@@ -4,11 +4,19 @@ var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
+var fs = require('fs');
+var mongoose = require('mongoose');
 
 var routes = require('./routes/index');
 var users = require('./routes/users');
 
-var app = express();
+
+
+var app = module.exports = express();
+
+livereload = require('express-livereload')
+livereload(app, config={})
+
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
@@ -38,6 +46,8 @@ app.use(function(req, res, next) {
 // development error handler
 // will print stacktrace
 if (app.get('env') === 'development') {
+    //app.use(express.errorHandler());
+
     app.use(function(err, req, res, next) {
         res.status(err.status || 500);
         res.render('error', {
@@ -45,6 +55,8 @@ if (app.get('env') === 'development') {
             error: err
         });
     });
+
+    mongoose.connect('mongodb://localhost/chatlan');
 }
 
 // production error handler
@@ -57,6 +69,14 @@ app.use(function(err, req, res, next) {
     });
 });
 
+
+// load all files in model dir
+fs.readdirSync(__dirname + '/models').forEach(function(filename) {
+    if(~filename.indexOf('.js'))
+        require(__dirname + '/models/' + filename); 
+});
+
+
 var debug = require('debug')('generated-express-app');
 app.set('port', process.env.PORT || 3000);
 
@@ -66,7 +86,7 @@ var server = app.listen(app.get('port'), function() {
 var io = require('socket.io').listen(server);
 
 io.sockets.on('connection', function (socket) {
-    socket.on('sendMsg', function (data){
+    socket.on('sendMsg', function (data) {
                   socket.emit('message',data);
                   console.log(data);
               });
@@ -76,4 +96,4 @@ io.sockets.on('connection', function (socket) {
     console.log("socket.io initialized!");
 });
 
-module.exports = app;
+
