@@ -1,41 +1,134 @@
 extends layout
 
 block content
-    script(src='/javascripts/chat.js')
-    script(src="http://code.jquery.com/jquery-1.11.1.js")
-    script(src="/socket.io/socket.io.js")
-    navBar
-       nav(class='navbar navbar-default', role='navigation')
-           .container-fluid
-               .navbar-header
-                   button(class='navbar-toggle', data-toggle='collapse', data-target='#bs-example-navbar-collapse-1')
-                       span.sronly
-                       span.icon-bar
-                       span.icon-bar
-                       span.icon-bar
-                   a(class='navbar-brand', href='/#') Available Devices
-               #bs-example-navbar-collapse-1(class='collapse navbar-collapse')
-                   ul(class='nav navbar-nav')
-                       li
-                           a(href='/login') Login
-    .col-md-8
-        .jumbotron
-            h1= title
-            p Welcome to #{title}
-    #chat
-        .container-fluid
-            .col-md-8
-                #content(style='width: 500px; height: 300px; margin: 0 0 20px 0; border: solid 1px #999; overflow-y: scroll;')
-            .col-md-8
-                .controls
-                    input(
-                    id='field',
-                    type='field',
-                    style='width:350px;',
-                    value=""
-                    )
-                    input(
-                    id='send',
-                    type='button',
-                    value='send'
-                    )
+  link(href='/stylesheets/style.css', rel='stylesheet')
+  script(src='/javascripts/chat.js')
+  script(src='/bower_components/jquery/dist/jquery.min.js')
+  script(src='/bower_components/bootstrap/dist/js/bootstrap.min.js')
+  script(src="/socket.io/socket.io.js")
+  
+  #signInModal.modal.fade(tabindex='-1', role='dialog', aria-labelledby='myModalLabel', aria-hidden='true')
+    .modal-dialog.modal-sm
+      .modal-content
+        .modal-header
+          button.close(type='button', data-dismiss='modal')
+            span(aria-hidden='true') ×
+            span.sr-only Close
+          h4#myModalLabel.modal-title Sign In
+        .modal-body
+          .input-group
+            span.input-group-addon.glyphicon.glyphicon-user
+            input.form-control(id='signInUsername', type='text', placeholder='username')
+          br
+          .input-group
+            span.input-group-addon.glyphicon.glyphicon-user
+            input.form-control(id='signInPassword', type='password', placeholder='password')
+        .modal-footer
+          button.btn.btn-default.navbar-left(id='signUpBtn' type='button', data-toggle='modal', data-target='#signUpModal') Sign Up!
+          button.btn.btn-primary.navbar-right(type='button') Sign In
+          a.navbar-right(href='#') Forgot pwd?
+
+  #signUpModal.modal.fade(tabindex='-1', role='dialog', aria-labelledby='myModalLabel', aria-hidden='true')
+    .modal-dialog.modal-sm
+      .modal-content
+        .modal-header
+          button.close(type='button', data-dismiss='modal')
+            span(aria-hidden='true') ×
+            span.sr-only Close
+          h4#myModalLabel.modal-title Sign Up
+        .modal-body
+          .input-group
+            span.input-group-addon.glyphicon.glyphicon-user
+            input.form-control(id='signUpUsername', type='text', placeholder='username')
+          br
+          .input-group
+            span.input-group-addon.glyphicon.glyphicon-user
+            input.form-control(id='signUpPassword', type='password', placeholder='password')
+          br
+          .input-group
+            span.input-group-addon.glyphicon.glyphicon-user
+            input.form-control(id='signUpConfimPassword', type='password', placeholder='confirm password')
+          br
+          .input-group
+            span.input-group-addon.glyphicon.glyphicon-envelope
+            input.form-control(id='signUpEmail', type='email', placeholder='email')
+        .modal-footer
+          button.btn.btn-primary(type='button') Sign Up!
+
+  nav.navbar.navbar-default(role='navigation')
+    .container-fluid
+        .navbar-header
+          button.navbar-toggle.collapsed(type='button', data-toggle='collapse', data-target='#bs-example-navbar-collapse-1')
+            span.sr-only Toggle navigation
+            span.icon-bar
+            span.icon-bar
+            span.icon-bar
+          a.navbar-brand(href='#') ChatLan
+        #bs-example-navbar-collapse-1.collapse.navbar-collapse
+          ul.nav.navbar-nav
+            li.active
+              a(href='#') Link
+            li
+              a(href='#') Link
+            li.dropdown
+              a.dropdown-toggle(href='#', data-toggle='dropdown')
+                | Dropdown
+                span.caret
+              ul.dropdown-menu(role='menu')
+                li
+                  a(href='#') Action
+                li
+                  a(href='#') Another action
+                li
+                  a(href='#') Something else here
+                li.divider
+                li
+                  a(href='#') Separated link
+                li.divider
+                li
+                  a(href='#') One more separated link
+          form.navbar-form.navbar-left(role='search')
+            .form-group
+              input.form-control(type='text', placeholder='Search')
+            button.btn.btn-default(type='submit') Submit
+          ul.nav.navbar-nav.navbar-right
+            li 
+              a(href='#') Link
+            li 
+              button.btn.btn-default.navbar-btn(id='signInBtn', type='button', data-toggle='modal', data-target='#signInModal') Sign in
+  #chat-box
+    .container-fluid
+      #chat-container.container.maxWidth.maxHeigth
+        ul
+          li
+            .bubble
+              span.personName Person name:
+              span.personSay the name of my village is Rathanpur
+              span.time.round 12:55 AM
+          li
+            .bubble2
+              span.personName2 Person name:
+              span.personSay2 say hellooo yes the name of my village is rathanpurssssssssssssssssssssssssss sssssssssssssssssssssssssssssssssssssss
+              span.time2.round 12:55 PM
+          li
+            .bubble
+              span.personName Person name:
+              span.personSay the name of my village is Rathanpur
+              span.time.round 12:55 AM
+          li
+            .bubble2
+              span.personName2 Person name:
+              span.personSay2 say hellooo yes the name of my village is rathanpurssssssssssssssssssssssssss sssssssssssssssssssssssssssssssssssssss
+              span.time2.round 12:55 PM
+
+      .input-group
+        .row
+          .col-lg-6
+            .input-group
+              input.form-control(type='text', placeholder='Type here...')
+              span.input-group-btn
+                button.btn.btn-default(type='button') Send!
+
+                
+
+                    

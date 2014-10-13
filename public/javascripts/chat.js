@@ -2,9 +2,10 @@ window.onload = function() {
 
     var chatLog = [];
     var socket = io.connect('http://localhost:3000');
-    var field = document.getElementById("field");
-    var sendButton = document.getElementById("send");
-    var content = document.getElementById("content");
+    var field = $("#field");
+    var sendButton = $("#send");
+    var content = $("#content");
+    var signInBtn = $("#signInBtn");
 
     socket.on('message', function (data) {
         if(data.message) {
@@ -26,4 +27,9 @@ window.onload = function() {
         console.log(text);
     };
 
+    // momentanea
+    //$("#signInModal").modal('toggle');
+    /*$("#signUpBtn").onclick = function() {
+        ('toggle');
+    }*/
 }
