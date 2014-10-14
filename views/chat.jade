@@ -1,11 +1,6 @@
 extends layout
 
 block content
-  link(href='/stylesheets/style.css', rel='stylesheet')
-  script(src='/javascripts/chat.js')
-  script(src='/bower_components/jquery/dist/jquery.min.js')
-  script(src='/bower_components/bootstrap/dist/js/bootstrap.min.js')
-  script(src="/socket.io/socket.io.js")
   
   #signInModal.modal.fade(tabindex='-1', role='dialog', aria-labelledby='myModalLabel', aria-hidden='true')
     .modal-dialog.modal-sm
@@ -125,9 +120,9 @@ block content
         .row
           .col-lg-6
             .input-group
-              input.form-control(type='text', placeholder='Type here...')
+              input.form-control(id="inputText", type='text', placeholder='Type here...')
               span.input-group-btn
-                button.btn.btn-default(type='button') Send!
+                button.btn.btn-default(id="sendBtn", type='button') Send!
 
                 
 
