@@ -97,3 +97,8 @@ ul li {
   height: 300px;
   width: 450px;
 }
+
+#loginNavBar li:not(:last-child) { display: none; }
+#loginNavBar li:last-child { display: block; }
+#dataInput .alert {display: none;}
+

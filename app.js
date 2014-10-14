@@ -1,3 +1,4 @@
+
 var express = require('express');
 var path = require('path');
 var favicon = require('serve-favicon');
@@ -6,11 +7,16 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var fs = require('fs');
 var mongoose = require('mongoose');
+var util = require('util');
+
+var mongodb_address = 'mongodb://localhost/chatlan';
 
 var routes = require('./routes/index');
 var users = require('./routes/users');
+var login = require('./routes/login');
 
-
+var mongooseSession = require('mongoose-session')(mongoose);
+var passportSocketIo = require("passport.socketio");
 
 var app = module.exports = express();
 
@@ -33,6 +39,7 @@ app.use(express.static(__dirname + '/public'));
 app.use('/bower_components',  express.static(__dirname + '/bower_components'));
 app.use('/', routes);
 app.use('/users', users);
+app.use('/login', login);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -56,7 +63,7 @@ if (app.get('env') === 'development') {
         });
     });
 
-    mongoose.connect('mongodb://localhost/chatlan');
+    mongoose.connect(mongodb_address);
 }
 
 // production error handler
@@ -76,24 +83,72 @@ fs.readdirSync(__dirname + '/models').forEach(function(filename) {
         require(__dirname + '/models/' + filename); 
 });
 
-
 var debug = require('debug')('generated-express-app');
 app.set('port', process.env.PORT || 3000);
 
 var server = app.listen(app.get('port'), function() {
     debug('Express server listening on port ' + server.address().port);
 });
+
+
 var io = require('socket.io').listen(server);
 
+/*
+io.use(passportSocketIo.authorize({
+  cookieParser: cookieParser,
+  key:         'express.sid',       // the name of the cookie where express/connect stores its session_id
+  secret:      'session_secret',    // the session_secret to parse the cookie
+  store:       mongooseSession,        // we NEED to use a sessionstore. no memorystore please
+  success:     onAuthorizeSuccess,  // *optional* callback on success - read more below
+  fail:        onAuthorizeFail,     // *optional* callback on fail/error - read more below
+}));
+
+function onAuthorizeSuccess(data, accept){
+  console.log('successful connection to socket.io');
+
+  // The accept-callback still allows us to decide whether to
+  // accept the connection or not.
+  //accept(null, true);
+
+  // OR
+
+  // If you use socket.io@1.X the callback looks different
+  accept();
+}
+
+function onAuthorizeFail(data, message, error, accept){
+  console.log(error);
+  if(error)
+    throw new Error(message);
+  console.log('failed connection to socket.io:', message);
+
+  // We use this callback to log all of our failed connections.
+  //accept(null, false);
+
+  // OR
+
+  // If you use socket.io@1.X the callback looks different
+  // If you don't want to accept the connection
+  if(error)
+    accept(new Error(message));
+  // this error will be sent to the user as a special error-package
+  // see: http://socket.io/docs/client-api/#socket > error-object
+}
+*/
+
 io.sockets.on('connection', function (socket) {
+    console.log("New Socket/Client Id = " + socket.id);
+    socket.emit('message', {clientId: socket.id });
+    
     socket.on('sendMsg', function (data) {
-                  socket.emit('message',data);
-                  console.log(data);
-              });
-    socket.on('disconnect', function(){
-                  console.log("user disconnected");
-              });
+        io.sockets.emit('message', data);
+        console.log(data);
+    });
+
+    socket.on('disconnect', function() {
+        //console.log(util.inspect(socket, false, null));
+        console.log("user disconnected");
+    });
+    
     console.log("socket.io initialized!");
 });
-
-

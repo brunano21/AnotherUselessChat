@@ -10,17 +10,17 @@ block content
             span(aria-hidden='true') ×
             span.sr-only Close
           h4#myModalLabel.modal-title Sign In
-        .modal-body
+        .modal-body(id='dataInput')
           .input-group
             span.input-group-addon.glyphicon.glyphicon-user
-            input.form-control(id='signInUsername', type='text', placeholder='username')
+            input.form-control(id='signInUsername', name='username', type='text', placeholder='username')
           br
           .input-group
             span.input-group-addon.glyphicon.glyphicon-user
-            input.form-control(id='signInPassword', type='password', placeholder='password')
+            input.form-control(id='signInPassword', name='password', type='password', placeholder='password')
         .modal-footer
           button.btn.btn-default.navbar-left(id='signUpBtn' type='button', data-toggle='modal', data-target='#signUpModal') Sign Up!
-          button.btn.btn-primary.navbar-right(type='button') Sign In
+          button.btn.btn-primary.navbar-right(id='dataSignInSendBtn', type='button') Sign In
           a.navbar-right(href='#') Forgot pwd?
 
   #signUpModal.modal.fade(tabindex='-1', role='dialog', aria-labelledby='myModalLabel', aria-hidden='true')
@@ -86,11 +86,14 @@ block content
             .form-group
               input.form-control(type='text', placeholder='Search')
             button.btn.btn-default(type='submit') Submit
-          ul.nav.navbar-nav.navbar-right
+          ul.nav.navbar-nav.navbar-right(id="loginNavBar")
             li 
-              a(href='#') Link
+              p.navbar-text.navbar Signed in as 
+            li
+              button.btn.btn-primary.navbar-btn(id='signOutBtn', type='button')
+                span.glyphicon.glyphicon-off
             li 
-              button.btn.btn-default.navbar-btn(id='signInBtn', type='button', data-toggle='modal', data-target='#signInModal') Sign in
+              button.btn.btn-primary.navbar-btn(id='signInBtn', type='button', data-toggle='modal', data-target='#signInModal') Sign in
   #chat-box
     .container-fluid
       #chat-container.container.maxWidth.maxHeigth
