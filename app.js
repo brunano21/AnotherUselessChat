@@ -9,19 +9,16 @@ var fs = require('fs');
 var mongoose = require('mongoose');
 var util = require('util');
 
+var socketioJwt = require('socketio-jwt');
+var jwtSecret = 'AyM1SysPpbyDfgZld3umj1qzKObwVMkoqQ-EstJQLr_T-1qS0gZH75aKtMN3Yj0iPS4hcgUuTwjAzZr1Z9CAow';
+
 var mongodb_address = 'mongodb://localhost/chatlan';
 
 var routes = require('./routes/index');
 var users = require('./routes/users');
 var login = require('./routes/login');
 
-var mongooseSession = require('mongoose-session')(mongoose);
-var passportSocketIo = require("passport.socketio");
-
 var app = module.exports = express();
-
-livereload = require('express-livereload')
-livereload(app, config={})
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -62,11 +59,11 @@ if (app.get('env') === 'development') {
             error: err
         });
     });
-
+    // connecting to mongoDB
     mongoose.connect(mongodb_address);
 }
 
-// production error handler
+// production error handler 
 // no stacktraces leaked to user
 app.use(function(err, req, res, next) {
     res.status(err.status || 500);
@@ -77,7 +74,7 @@ app.use(function(err, req, res, next) {
 });
 
 
-// load all files in model dir
+// load all files in model dir (for MongoDB)
 fs.readdirSync(__dirname + '/models').forEach(function(filename) {
     if(~filename.indexOf('.js'))
         require(__dirname + '/models/' + filename); 
@@ -93,50 +90,15 @@ var server = app.listen(app.get('port'), function() {
 
 var io = require('socket.io').listen(server);
 
-/*
-io.use(passportSocketIo.authorize({
-  cookieParser: cookieParser,
-  key:         'express.sid',       // the name of the cookie where express/connect stores its session_id
-  secret:      'session_secret',    // the session_secret to parse the cookie
-  store:       mongooseSession,        // we NEED to use a sessionstore. no memorystore please
-  success:     onAuthorizeSuccess,  // *optional* callback on success - read more below
-  fail:        onAuthorizeFail,     // *optional* callback on fail/error - read more below
+// authorization through socketioJwt
+io.set('authorization', socketioJwt.authorize({
+  secret: jwtSecret,
+  handshake: true
 }));
 
-function onAuthorizeSuccess(data, accept){
-  console.log('successful connection to socket.io');
-
-  // The accept-callback still allows us to decide whether to
-  // accept the connection or not.
-  //accept(null, true);
-
-  // OR
-
-  // If you use socket.io@1.X the callback looks different
-  accept();
-}
-
-function onAuthorizeFail(data, message, error, accept){
-  console.log(error);
-  if(error)
-    throw new Error(message);
-  console.log('failed connection to socket.io:', message);
-
-  // We use this callback to log all of our failed connections.
-  //accept(null, false);
-
-  // OR
-
-  // If you use socket.io@1.X the callback looks different
-  // If you don't want to accept the connection
-  if(error)
-    accept(new Error(message));
-  // this error will be sent to the user as a special error-package
-  // see: http://socket.io/docs/client-api/#socket > error-object
-}
-*/
-
 io.sockets.on('connection', function (socket) {
+    console.log(socket.client.request.decoded_token.first_name, 'connected');
+
     console.log("New Socket/Client Id = " + socket.id);
     socket.emit('message', {clientId: socket.id });
     
