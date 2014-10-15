@@ -1,7 +1,7 @@
 window.onload = function() {
 
-    var server_address = 'http://192.168.0.8:3000'
-    
+    var server_address = 'http://localhost:3000'
+
     var chatLog = [];
     var socket = io.connect(server_address);
     var inputText = $("#inputText");
@@ -15,7 +15,7 @@ window.onload = function() {
         if(data.message) {
             chatLog.push(data.message);
             console.log("il payload e'"+data.message);
-            
+
             if(data.id == clientId)
                 $("#chat-container > ul").append(
                     '<li>' +
@@ -34,7 +34,7 @@ window.onload = function() {
                     '</li>');
             $("#chat-container").animate({scrollTop: $("#chat-container")[0].scrollHeight}, 600);
 
-            
+
         } else if(data.clientId) {
             clientId = data.clientId;
         }
@@ -46,14 +46,14 @@ window.onload = function() {
     sendBtn.on('click', function(event) {
         event.preventDefault();
         var text = inputText.val();
-        
+
         socket.emit('sendMsg', { message: text, id: clientId });
-        /*TODO: bisogna capire se ha senso inviare il messaggio al server e quando questo mi risponde con un ack allora stampo il messaggio 
+        /*TODO: bisogna capire se ha senso inviare il messaggio al server e quando questo mi risponde con un ack allora stampo il messaggio
         oppure se lo attacco direttamente, cosi come viene fatto per ora. */
         console.log(text);
-        
-        
-        
+
+
+
     });
 
     dataSignInSendBtn.on('click', function(event) {
@@ -65,7 +65,7 @@ window.onload = function() {
             type: "post",
             async: false,
             data : formData,
-            
+
             success: function(data, textStatus, jqXHR) {
                 if(data.status == 'OK') {
                     console.log('user logged!');
@@ -73,7 +73,7 @@ window.onload = function() {
                     $("#loginNavBar > li:last-child").hide();
                     $("#loginNavBar > li:not(:last-child)").show();
                     $("#signInModal").modal('toggle')
-                    
+
                 } else {
                     console.log('user NOT logged!')
                     // TODO: poco elegante, I know!
