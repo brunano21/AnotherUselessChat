@@ -10,17 +10,17 @@ block content
             span(aria-hidden='true') ×
             span.sr-only Close
           h4#myModalLabel.modal-title Sign In
-        .modal-body(id='dataInput')
+        .modal-body(id='signInDataForm')
           .input-group
             span.input-group-addon.glyphicon.glyphicon-user
-            input.form-control(id='signInUsername', name='username', type='text', placeholder='username')
+            input.form-control(id='signInEmail', name='email', type='text', placeholder='email')
           br
           .input-group
             span.input-group-addon.glyphicon.glyphicon-user
             input.form-control(id='signInPassword', name='password', type='password', placeholder='password')
         .modal-footer
           button.btn.btn-default.navbar-left(id='signUpBtn' type='button', data-toggle='modal', data-target='#signUpModal') Sign Up!
-          button.btn.btn-primary.navbar-right(id='dataSignInSendBtn', type='button') Sign In
+          button.btn.btn-primary.navbar-right(id='sendDataSignInBtn', type='button') Sign In
           a.navbar-right(href='#') Forgot pwd?
 
   #signUpModal.modal.fade(tabindex='-1', role='dialog', aria-labelledby='myModalLabel', aria-hidden='true')
@@ -31,24 +31,24 @@ block content
             span(aria-hidden='true') ×
             span.sr-only Close
           h4#myModalLabel.modal-title Sign Up
-        .modal-body
+        .modal-body(id='signUpDataForm')
           .input-group
             span.input-group-addon.glyphicon.glyphicon-user
-            input.form-control(id='signUpUsername', type='text', placeholder='username')
+            input.form-control(id='signUpUsername', name='username', type='text', placeholder='username')
           br
           .input-group
             span.input-group-addon.glyphicon.glyphicon-user
-            input.form-control(id='signUpPassword', type='password', placeholder='password')
+            input.form-control(id='signUpPassword', name='password', type='password', placeholder='password')
           br
           .input-group
             span.input-group-addon.glyphicon.glyphicon-user
-            input.form-control(id='signUpConfimPassword', type='password', placeholder='confirm password')
+            input.form-control(id='signUpConfirmPassword', name='password2', type='password', placeholder='confirm password')
           br
           .input-group
             span.input-group-addon.glyphicon.glyphicon-envelope
-            input.form-control(id='signUpEmail', type='email', placeholder='email')
+            input.form-control(id='signUpEmail', name='email', type='email', placeholder='email')
         .modal-footer
-          button.btn.btn-primary(type='button') Sign Up!
+          button.btn.btn-primary(id='sendDataSignUpBtn', type='button') Sign Up!
 
   nav.navbar.navbar-default(role='navigation')
     .container-fluid
@@ -88,7 +88,7 @@ block content
             button.btn.btn-default(type='submit') Submit
           ul.nav.navbar-nav.navbar-right(id="loginNavBar")
             li 
-              p.navbar-text.navbar Signed in as 
+              p.navbar-text Signed in as 
             li
               button.btn.btn-primary.navbar-btn(id='signOutBtn', type='button')
                 span.glyphicon.glyphicon-off
@@ -96,36 +96,44 @@ block content
               button.btn.btn-primary.navbar-btn(id='signInBtn', type='button', data-toggle='modal', data-target='#signInModal') Sign in
   #chat-box
     .container-fluid
-      #chat-container.container.maxWidth.maxHeigth
-        ul
-          li
-            .bubble
-              span.personName Person name:
-              span.personSay the name of my village is Rathanpur
-              span.time.round 12:55 AM
-          li
-            .bubble2
-              span.personName2 Person name:
-              span.personSay2 say hellooo yes the name of my village is rathanpurssssssssssssssssssssssssss sssssssssssssssssssssssssssssssssssssss
-              span.time2.round 12:55 PM
-          li
-            .bubble
-              span.personName Person name:
-              span.personSay the name of my village is Rathanpur
-              span.time.round 12:55 AM
-          li
-            .bubble2
-              span.personName2 Person name:
-              span.personSay2 say hellooo yes the name of my village is rathanpurssssssssssssssssssssssssss sssssssssssssssssssssssssssssssssssssss
-              span.time2.round 12:55 PM
-
-      .input-group
-        .row
-          .col-lg-6
-            .input-group
-              input.form-control(id="inputText", type='text', placeholder='Type here...')
-              span.input-group-btn
-                button.btn.btn-default(id="sendBtn", type='button') Send!
+      .row
+        #chat-container.container.col-md-8.maxHeigth
+          ul
+            li
+              .bubble
+                span.personName Person name:
+                span.personSay the name of my village is Rathanpur
+                span.time.round 12:55 AM
+            li
+              .bubble2
+                span.personName2 Person name:
+                span.personSay2 say hellooo yes the name of my village is rathanpurssssssssssssssssssssssssss sssssssssssssssssssssssssssssssssssssss
+                span.time2.round 12:55 PM
+            li
+              .bubble
+                span.personName Person name:
+                span.personSay the name of my village is Rathanpur
+                span.time.round 12:55 AM
+            li
+              .bubble2
+                span.personName2 Person name:
+                span.personSay2 say hellooo yes the name of my village is rathanpurssssssssssssssssssssssssss sssssssssssssssssssssssssssssssssssssss
+                span.time2.round 12:55 PM
+        #user-container.container.col-md-4
+          h2 Users List
+          ul
+            li
+              h4
+                span.label.label-default User1
+            li
+              h4
+                span.label.label-default User2
+      .row
+        //.col-lg-6
+        .input-group
+          input.form-control(id="inputText", type='text', placeholder='Type here...')
+          span.input-group-btn
+            button.btn.btn-default(id="sendBtn", type='button') Send!
 
                 
 

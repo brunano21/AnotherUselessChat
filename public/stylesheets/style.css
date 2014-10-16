@@ -94,29 +94,8 @@ ul li {
   overflow-y: scroll;
 }
 .maxHeigth {
-  height: 300px;
-  width: 450px;
+  height: 450px;
+  
 }
 
-#loginNavBar li:not(:last-child) {
-  display: none;
-}
-
-
-
-
-
-
-
-
-
-
-
-#alkjfh{}
-#alkjewfh{}
-#alwekjfh{}
-#alkjfh{}
-
-
-
-
+#loginNavBar li:not(:last-child) { display: none; }

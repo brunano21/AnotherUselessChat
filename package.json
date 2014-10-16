@@ -18,6 +18,7 @@
         "mongoose":"*",
         "morgan":"*",
         "nodemon":"*",
-        "serve-favicon":"*"
+        "serve-favicon":"*",
+	    "bcrypt":"*"
     }
 }

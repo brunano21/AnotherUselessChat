@@ -5,18 +5,14 @@ var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
-var fs = require('fs');
 var mongoose = require('mongoose');
 var util = require('util');
+var fs = require('fs');
 
 var socketioJwt = require('socketio-jwt');
 var jwtSecret = 'AyM1SysPpbyDfgZld3umj1qzKObwVMkoqQ-EstJQLr_T-1qS0gZH75aKtMN3Yj0iPS4hcgUuTwjAzZr1Z9CAow';
 
 var mongodb_address = 'mongodb://localhost/chatlan';
-
-var routes = require('./routes/index');
-var users = require('./routes/users');
-var login = require('./routes/login');
 
 var app = module.exports = express();
 
@@ -34,9 +30,11 @@ app.use(require('stylus').middleware(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(__dirname + '/public'));
 app.use('/bower_components',  express.static(__dirname + '/bower_components'));
-app.use('/', routes);
-app.use('/users', users);
-app.use('/login', login);
+
+app.use('/', require('./routes/index'));
+app.use('/users', require('./routes/users'));
+app.use('/login', require('./routes/login'));
+app.use('/register', require('./routes/register'));
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -75,11 +73,11 @@ app.use(function(err, req, res, next) {
 
 
 // load all files in model dir (for MongoDB)
-fs.readdirSync(__dirname + '/models').forEach(function(filename) {
+/*fs.readdirSync(__dirname + '/models').forEach(function(filename) {
     if(~filename.indexOf('.js'))
         require(__dirname + '/models/' + filename); 
 });
-
+*/
 var debug = require('debug')('generated-express-app');
 app.set('port', process.env.PORT || 3000);
 
@@ -92,16 +90,29 @@ var io = require('socket.io').listen(server);
 
 // authorization through socketioJwt
 io.set('authorization', socketioJwt.authorize({
-  secret: jwtSecret,
-  handshake: true
+    secret: jwtSecret,
+    handshake: true
 }));
 
-io.sockets.on('connection', function (socket) {
-    console.log(socket.client.request.decoded_token.first_name, 'connected');
+// connected clients
+var clients = {};
 
+io.sockets.on('connection', function (socket) {
+    console.log('User \"' + socket.client.request.decoded_token.username + '\" connected!');
+    //console.log('decoded_token: ');
+    //console.log(socket.client.request.decoded_token);
     console.log("New Socket/Client Id = " + socket.id);
+    
+    
     socket.emit('message', {clientId: socket.id });
     
+    clients['clientId_' + socket.id] = socket.client.request.decoded_token.username;
+
+    console.log("#clients: " + Object.keys(clients).length);
+
+    io.sockets.emit('user-list', clients);
+
+
     socket.on('sendMsg', function (data) {
         io.sockets.emit('message', data);
         console.log(data);
@@ -110,6 +121,9 @@ io.sockets.on('connection', function (socket) {
     socket.on('disconnect', function() {
         //console.log(util.inspect(socket, false, null));
         console.log("user disconnected");
+        delete clients['clientId_'+ socket.id];
+        console.log("#clients: " + Object.keys(clients).length);
+        socket.emit('user-list', clients);
     });
     
     console.log("socket.io initialized!");
