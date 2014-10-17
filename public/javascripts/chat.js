@@ -1,18 +1,18 @@
 window.onload = function() {
 
-    var server_address = 'http://192.168.0.8:3000';
+    var server_address = 'http://br1srpi.crabdance.com:3000';
+    //var server_address = 'http://192.168.0.8:3000';
 
     var chatLog = [];
-    var socket; //= io.connect(server_address);
+    var socket;
     var $inputText = $("#inputText");
     var $sendBtn = $("#sendBtn");
-    var $content = $("#content");
-    //var $signInBtn = $("#signInBtn");
     var $signUpBtn = $("#signUpBtn");
     var $sendDataSignInBtn = $("#sendDataSignInBtn");
     var $sendDataSignUpBtn = $("#sendDataSignUpBtn");
 
     var clientId = null;
+    var username = null;
 
     function addNewUser(clientId, username){
         $("#user-container > ul").append(
@@ -55,27 +55,28 @@ window.onload = function() {
                 chatLog.push(data.message);
                 console.log("il payload e' " + data.message);
 
-                if(data.id == clientId)
+                if(data.id == clientId) // if the sender is me!
                     $("#chat-container > ul").append(
                         '<li>' +
                             '<div class="bubble2">' +
-                              '<span class="personName2"> '+ 'Nick' + '<span>' +
+                              '<span class="personName2"> '+ data.sender + '<span>' +
                               '<span class="personSay2"> '+ data.message + '<span>' +
-                              '<span class="time2 round"> '+ '12.55 AM' + '<span>' +
+                              '<span class="time2 round"> '+ data.time + '<span>' +
                         '</li>');
                 else
                     $("#chat-container > ul").append(
                         '<li>' +
                             '<div class="bubble">' +
-                              '<span class="personName"> '+ 'Nick' + '<span>' +
+                              '<span class="personName"> '+ data.sender + '<span>' +
                               '<span class="personSay"> '+ data.message + '<span>' +
-                              '<span class="time round"> '+ '12.55 AM' + '<span>' +
+                              '<span class="time round"> '+ data.time + '<span>' +
                         '</li>');
                 $("#chat-container").animate({scrollTop: $("#chat-container")[0].scrollHeight}, 600);
 
 
             } else if(data.clientId) {
                 clientId = data.clientId;
+                username = data.username;
             }
             else {
                 console.log("There is a problem: ", data);
@@ -87,14 +88,31 @@ window.onload = function() {
 
     $sendBtn.on('click', function(event) {
         event.preventDefault();
+        if($inputText.val() == "")
+            return;
+
         var text = $inputText.val();
+        var time = new Date();
+        var ampm = time.getHours() < 12 ? "AM" : "PM";
+        var timestamp = ("0" + time.getHours()).slice(-2) + ":" + ("0" + time.getMinutes()).slice(-2) + " " + ampm;
+        
+        socket.emit('sendMsg', { 
+            id:         clientId, 
+            message:    text, 
+            sender:     username,
+            time:       timestamp
+        });
 
-        socket.emit('sendMsg', { message: text, id: clientId });
-        console.log(text);
-
-
+        //reset input text
+        $inputText.val("");
 
     });
+
+    $inputText.keydown(function (e){
+        if(e.keyCode == 13){
+            $sendBtn.trigger('click');
+        }
+    })
 
     $sendDataSignInBtn.on('click', function(event) {
         event.preventDefault();

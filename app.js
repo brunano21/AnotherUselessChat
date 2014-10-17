@@ -104,7 +104,7 @@ io.sockets.on('connection', function (socket) {
     console.log("New Socket/Client Id = " + socket.id);
     
     
-    socket.emit('message', {clientId: socket.id });
+    socket.emit('message', {clientId: socket.id, username: socket.client.request.decoded_token.username});
     
     clients['clientId_' + socket.id] = socket.client.request.decoded_token.username;
 
