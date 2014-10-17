@@ -95,7 +95,7 @@ ul li {
 }
 .maxHeigth {
   height: 450px;
-  
 }
-
-#loginNavBar li:not(:last-child) { display: none; }
+#loginNavBar li:not(:last-child) { 
+  display: none; 
+}

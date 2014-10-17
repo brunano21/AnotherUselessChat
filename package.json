@@ -19,6 +19,7 @@
         "morgan":"*",
         "nodemon":"*",
         "serve-favicon":"*",
-	    "bcrypt":"*"
+	    "bcrypt":"*",
+        "socketio-jwt":"*"
     }
 }

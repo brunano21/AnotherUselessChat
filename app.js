@@ -26,7 +26,7 @@ app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(require('stylus').middleware(path.join(__dirname, 'public')));
+//app.use(require('stylus').middleware(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(__dirname + '/public'));
 app.use('/bower_components',  express.static(__dirname + '/bower_components'));
@@ -123,7 +123,7 @@ io.sockets.on('connection', function (socket) {
         console.log("user disconnected");
         delete clients['clientId_'+ socket.id];
         console.log("#clients: " + Object.keys(clients).length);
-        socket.emit('user-list', clients);
+        io.sockets.emit('user-list', clients);
     });
     
     console.log("socket.io initialized!");
