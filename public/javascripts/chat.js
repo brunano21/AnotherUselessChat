@@ -1,7 +1,8 @@
 window.onload = function() {
 
-    var server_address = 'http://br1srpi.crabdance.com:3000';
-    //var server_address = 'http://192.168.0.8:3000';
+    //var server_address = 'http://br1srpi.crabdance.com:3000';
+    //var server_address = 'http://192.168.0.2:3000';
+    var server_address = 'http://localhost:3000';
 
     var chatLog = [];
     var socket;
@@ -109,7 +110,7 @@ window.onload = function() {
     });
 
     $inputText.keydown(function (e){
-        if(e.keyCode == 13){
+        if(e.keyCode == '13'){
             $sendBtn.trigger('click');
         }
     })
