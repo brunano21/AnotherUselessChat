@@ -88,6 +88,7 @@ block content
                 | Login
              #chat-box
     .container
+<<<<<<< HEAD
       #user-container.container.col-md-3
         h2 Users List
         ul
@@ -138,12 +139,43 @@ block content
                 div.progress(style='display:none')
                   div.progress-bar.progress-bar-striped.active(role='progressbar', aria-valuenow='45', aria-valuemin='0', aria-valuemax='100', style='width: 45%')
                     span 45%
-   
-   nav.navbar-inverse.navbar-fixed-bottom
-    .container-fluid
-     .navbar-header
-      p bla bla bla bla bla
+
+                  
+
 
             
                   
     
+=======
+      .row
+        #chat-container.container.col-md-6.maxHeigth
+            ul
+              li
+                .bubble2
+                  span.personName2 bot:
+                  span.personSay2  Welcome! 
+                  span.time2.round 
+                  
+        #user-container.container.col-md-4
+            h2 Users List
+            ul
+              li
+                h4
+                  span.label.label-default User1
+              li
+                h4
+                  span.label.label-default User2
+      .row
+        #text-box 
+         .col-xs-3
+         .col-xs-6
+          .input-group
+           input.form-control(id="inputText", type='text', placeholder='Type here...')
+           span.input-group-btn
+             button.btn.btn-default(id="sendBtn", type='button') Send!
+    nav.navbar-inverse.navbar-fixed-bottom
+     .container-fluid
+      .navbar-header
+       p bla bla bla bla bla
+
+>>>>>>> 52e378ee282e1b1b9f4d0050db13bf28e45bba9b
