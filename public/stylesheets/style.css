@@ -1,3 +1,8 @@
+body {
+background-image: url('../images/bgPattern.png');
+
+}
+
 ul {
   list-style-type: none;
   padding: 0px;
@@ -96,6 +101,7 @@ ul li {
   position: relative;
   display: block;
 }
+
 #chat-container {
   overflow-y: scroll;
   /*
@@ -119,10 +125,70 @@ ul li {
 }
 
 .chatArea {
-background-color:#ffffff;
+  background-color:#ffffff;
 }
 
-body {
-background-image: url('../images/bgPattern.png');
+#loginNavBar li:not(:last-child) { 
+  display: none; 
+}
+
+.btn-file {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-file input[type=file] {
+  position: absolute;
+  top: 0;
+  right: 0;
+  min-width: 100%;
+  min-height: 100%;
+  font-size: 100px;
+  text-align: right;
+  filter: alpha(opacity=0);
+  opacity: 0;
+  outline: none;
+  background: white;
+  cursor: inherit;
+  display: block;
+}
+
+.flip {
+  -webkit-perspective: 800;
+  perspective: 800;
+  position: relative;
+ 
+}
+.flip .card.flipped {
+  -webkit-transform: rotatex(-180deg);
+  transform: rotatex(-180deg);
+}
+.flip .card {
+  height: 100%;
+  -webkit-transform-style: preserve-3d;
+  -webkit-transition: 0.5s;
+  transform-style: preserve-3d;
+  transition: 0.5s;
+}
+
+.flip .card .face {
+
+  -webkit-backface-visibility: hidden ;
+  backface-visibility: hidden ;
+  z-index: 2;
+   
+}
+
+.flip .card .front {
+  position: absolute;
+  width: 100%;
+  z-index: 1;
 
 }
+
+.flip .card .back {
+  -webkit-transform: rotatex(-180deg);
+    transform: rotatex(-180deg);
+}
+
+.inner{margin:0px !important;}

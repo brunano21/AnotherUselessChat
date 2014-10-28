@@ -70,29 +70,60 @@ block content
            a(href='#') Themes
   #chat-box
     .container
-      .row
-        #chat-container.container.col-md-6.maxHeigth
-            ul
-              li
-                .bubble2
-                  span.personName2 bot:
-                  span.personSay2  Welcome! 
-                  span.time2.round 
-        .col-md-1            
-        #user-container.container.col-md-4
-            h2 Users List
-            ul
-              li
-                h4
-                  span.label.label-default User1
-              li
-                h4
-                  span.label.label-default User2
+      #user-container.container.col-md-3
+        h2 Users List
+        ul
+          li
+            h4
+              span.label.label-default User1
+          li
+            h4
+              span.label.label-default User2
+      #chat-container.container.col-md-6.maxHeigth
+        ul
+          li
+            .bubble2
+              span.personName2 bot:
+              span.personSay2  Welcome! 
+              span.time2.round 
   #text-box 
-     .col-xs-3
-     .col-xs-6
-         .input-group
-           input.form-control(id="inputText", type='text', placeholder='Type here...')
-           span.input-group-btn
-             button.btn.btn-default(id="sendBtn", type='button') Send!
+      .col-xs-6
+          .input-group
+            input.form-control(id="inputText", type='text', placeholder='Type here...')
+            span.input-group-btn
+              button.btn.btn-default(id="sendBtn", type='button') Send!
+      .col-xs-6
+        .container-fluid
+          .flip
+            .card
+              .face.front
+                form(role='file-form')
+                  .input-group
+                    span.input-group-btn
+                        span.btn.btn-primary.btn-file
+                          | Browse…
+                          input(type='file')
+                    input.form-control(type='text', readonly='')
+                select.selectpicker(id="user-picker", multiple='', data-size='4', data-selected-text-format="count>3", data-live-search="true")
+                button.btn.btn-primary.navbar-btn(id='sendFileBtn', type='button') Send File!
+              .face.back
+                .well.well-sm.inner(id="sender_username")
+                span.label.label.info(id="sender_id", style="display:none")
+                span.label.label-default Filename:
+                span.label.label-info(id="filename")
+                br
+                span.label.label-default Size: 
+                span.label.label-info(id="filesize")
+                br
+                button.btn.btn-primary.navbar-btn(id='transferAcceptBtn', type='button') Yep!
+                button.btn.btn-primary.navbar-btn(id='transferCancelBtn', type='button') No!
+                div.progress(style='display:none')
+                  div.progress-bar.progress-bar-striped.active(role='progressbar', aria-valuenow='45', aria-valuemin='0', aria-valuemax='100', style='width: 45%')
+                    span 45%
+
+                  
+
+
+            
+                  
     
