@@ -38,7 +38,6 @@ app.use('/',            require('./routes/index'));
 app.use('/users',       require('./routes/users'));
 app.use('/login',       require('./routes/login'));
 app.use('/register',    require('./routes/register'));
-app.use('/download',    require('./routes/download'));
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -98,84 +97,105 @@ io.set('authorization', socketioJwt.authorize({
     handshake: true
 }));
 
-// connected clients
+// connected clients map
 var clients = {};
 
 io.sockets.on('connection', function (socket) {
     console.log('User \"' + socket.client.request.decoded_token.username + '\" connected!');
     console.log("New Socket/Client Id = " + socket.id);
     
-    socket.emit('message', {
-        type: "user_authenticated", 
-        payload : { clientId: socket.id, username: socket.client.request.decoded_token.username }
-    });
+    var client = new Client(socket.id, socket.client.request.decoded_token.username);
+
+    // saving new client into the clients map
+    clients[socket.id] = client;
     
-    clients[socket.id] = socket.client.request.decoded_token.username;
+    // send back its data!
+    socket.emit('message', { type: "user_authenticated", payload : client });
+    
     console.log("#clients: " + Object.keys(clients).length);
-    io.sockets.emit('message', {type: 'user_list', payload: clients });
+    io.sockets.emit('message', {type: 'user_list', payload: buildUserList() });
 
 
     socket.on('sendMsg', function (data) {
         io.sockets.emit('message', {type: 'new_message', payload: data});
+        console.log("### New Message ###");
         console.log(data);
     });
 
-    socket.on('fileTransferRequest', function (data) {
-        console.log("### fileTransferRequest ###");
-        console.log("# sender: " + socket.id + " - username: " + clients[socket.id]);
+    // coming from the file sender.
+    socket.on('file_transfer_request', function (data) {
+        console.log("### File Transfer Request ###");
         console.log("# filename: " + data.filename);
         console.log("# filesize: " + data.filesize);
+        console.log("# sender: " + socket.id + " - username: " + clients[socket.id].username);
         for(var index in data.receivers)
-            console.log("# receiver: " + data.receivers[index] + " - username: " + clients[data.receivers[index]]);
+            console.log("# receiver: " + data.receivers[index] + " - username: " + clients[data.receivers[index]].username);
         
         io.to(data.receivers[index]).emit("message", {
-            type: "incoming_file", 
+            type: "file_transfer_notification", 
             payload: { 
                 sender_id: socket.id, 
-                sender_username: clients[socket.id], 
+                sender_username: clients[socket.id].username, 
                 filename: data.filename, 
                 filesize: data.filesize 
             }
         });
-        
-        //io.to(data.receivers[index]).emit("message", {type: "url_incoming_file", payload: __dirname + '/tmp_files/' + 'prova.png'});
     });
 
-    socket.on('fileTransferResponse', function (data) {
-        console.log("### fileTransferResponse ###");
-        console.log("# accepted: " + data.accepted);
-        console.log("# receiver: " + socket.id + " - username: " + clients[socket.id]);
+    // coming from the possible receiver.
+    socket.on('file_transfer_response', function (data) {
+        console.log("### File Transfer Response ###");
+        console.log("# receiver: " + socket.id + " - username: " + clients[socket.id].username);
         console.log("# filename: " + data.filename);
         console.log("# filesize: " + data.filesize);
-        console.log("# request'sender : " +  data.sender_id + " - username: " + clients[data.sender_id]);
+        console.log("# accepted: " + data.accepted);
+        console.log("# peer_client_id: " + data.peer_client_id);
+        console.log("# request'sender : " +  data.sender_id + " - username: " + clients[data.sender_id].username);
         
         if(data.accepted) {
-            // request accepted -> send file
-            io.to(data.sender_id).emit("message", {type: "start_upload_file", payload: {}});
-            socket.emit("message", {type: "download_file", payload: {file_path: data.filename}});
+            // file transfer accepted -> send ack to the file sender.
+            io.to(data.sender_id).emit("message", {type: "file_transfer_accepted", payload: { receiver_id: data.peer_client_id }});
         }
         else {
-            io.to(data.sender_id).emit("message", {type: "upload_file_cancelled", payload: {}});
+            // 
+            io.to(data.sender_id).emit("message", {type: "file_transfer_cancelled", payload: {}});
 
         }
-    });
-
-    ss(socket).on('file', function(stream, data) {
-        console.log("Saving file...")
-        var filename = path.basename(data.filename);
-        var file_path = __dirname + '/tmp_files/' + filename;
-        console.log("Filename: " + filename);
-        console.log("File: " + filename);
-        stream.pipe(fs.createWriteStream(file_path));
     });
 
     socket.on('disconnect', function() {
-        //console.log(util.inspect(socket, false, null));
         console.log("user disconnected");
         delete clients[socket.id];
         console.log("#clients: " + Object.keys(clients).length);
-        io.sockets.emit('message', {type: 'user_list', payload: clients});
+        io.sockets.emit('message', {type: 'user_list', payload: buildUserList()});
     });
     
     console.log("socket.io initialized!");
 });
+
+
+/*************************
+ *  UTILITY FUNCTIONS    *
+ *************************/
+
+function Client(s, u) {
+    this.socket_id = s;
+    this.username = u;
+    this.peer_client_id = makeid();
+}
+
+function buildUserList() {
+    var user_list = {};
+    for(var index in clients)
+        user_list[index] = clients[index].username;
+    return user_list;
+}
+
+function makeid() {
+    var text = "";
+    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+    for( var i=0; i < 12; i++ )
+        text += possible.charAt(Math.floor(Math.random() * possible.length));
+    return text;
+}

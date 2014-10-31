@@ -15,13 +15,18 @@ window.onload = function() {
     var $transferAcceptBtn = $("#transferAcceptBtn");
 
     // user's info. 
-    var clientId = null; //Note: clientId == socket.id
+    var client_id = null; // Note: client_id == socket.id
     var username = null;
+    var peer_client_id = null;
 
     // set when user selects a file.
     var file = null;
     var filename = null;
-    
+
+    //var peer = null;
+    var peer_file = require('peer-file');
+    var peer = null; 
+
     /*************************
      *  UTILITY FUNCTIONS    *
      *************************/
@@ -32,6 +37,11 @@ window.onload = function() {
         var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
         var i = Math.floor(Math.log(bytes) / Math.log(k));
         return (bytes / Math.pow(k, i)).toPrecision(3) + ' ' + sizes[i];
+    }
+
+
+    function setupPeer() {
+
     }
 
     /*************************
@@ -62,11 +72,39 @@ window.onload = function() {
             console.log("MSG_TYPE: " + data.type);
             switch(data.type) {
                 case 'user_authenticated': 
-                    clientId = data.payload.clientId;
+                    // saving user data.
+                    client_id = data.payload.socket_id;
                     username = data.payload.username;
+                    peer_client_id = data.payload.peer_client_id;
+                    
+                    console.log("clientPeerId: " + peer_client_id);
+                    // create receiver peer for the client.
+                    peer = new Peer(peer_client_id, {key: 'wxhelisx5h2xogvi'});
+                    peer.on('connection', function(connection) {
+                        console.log("R: on connection");
+                        connection.on('open', function() {
+                            
+                            // Receive
+                            peer_file.receive(connection)
+                              .on('incoming', function(file) {
+                                console.log("R: incoming " + file.size);
+                                this.accept(file);
+                              })
+                              .on('progress', function(file, bytesReceived) {
+                                
+                                console.log("R: progress " + Math.ceil(bytesReceived / file.size * 100) + " - " + file.size);
+                              })
+                              .on('complete', function(file) {
+                                console.log("R: complete");
+                                var blob = new Blob(file.data, { type: file.type });
+                                console.log("Size:" + blob.size);
+                                saveAs(blob, "hellodfdsf world.png");
+                              })
+                        });
+                    });
                     break;
                 case 'new_message': 
-                    if(data.payload.id == clientId) // if the sender is me!
+                    if(data.payload.id == client_id) // if the sender is me!
                         $("#chat-container > ul").append(
                             '<li>' +
                                 '<div class="bubble2">' +
@@ -84,13 +122,6 @@ window.onload = function() {
                             '</li>');
                     $("#chat-container").animate({scrollTop: $("#chat-container")[0].scrollHeight}, 600);
                     break;
-                case 'incoming_file':
-                    $("#sender_username").text("User " + data.payload.sender_username + " is sending you a file. Accept?");
-                    $("#sender_id").text(data.payload.sender_id);
-                    $("#filename").text(data.payload.filename);
-                    $("#filesize").text(bytesToSize(data.payload.filesize));
-                    $('.flip').find('.card').toggleClass('flipped');
-                    break;
                 case 'user_list':
                     $("#user-container > ul").empty();
                     $("#user-picker").empty();
@@ -103,39 +134,41 @@ window.onload = function() {
                             '</li>'    
                         );
                     
-                        if(clientId != i)  
+                        if(client_id != i)  
                             $("#user-picker").append('<option value=\"' + i + '\">' + data.payload[i] + '</option>');
                         else
                             $("#user-picker").append('<option disabled value=\"' + i + '\">' + data.payload[i] + '</option>');
                     }
 
-                    // refresh select-picker
+                    // refreshing select-picker
                     $('#user-picker').selectpicker('refresh');
                     break;
-                case 'download_file':
-                    console.log("send request for getting file");
-                    $('<form action="/download" method="POST">' + 
-                        '<input type="hidden" name="file_path" value="' + data.payload.file_path + '">' +
-                        '</form>')
-                    .submit();
+                case 'file_transfer_notification':
+                    $("#sender_username").text("User " + data.payload.sender_username + " is sending you a file. Accept?");
+                    $("#sender_id").text(data.payload.sender_id);
+                    $("#filename").text(data.payload.filename);
+                    $("#filesize").text(bytesToSize(data.payload.filesize));
+                    $('.flip').find('.card').toggleClass('flipped');
                     break;
-                case 'start_upload_file':
-                    // upload file to the server.
-                    var stream = ss.createStream();
-                    ss(socket).emit('file', stream, {filename: filename, size: file.size});
-                    var blobStream = ss.createBlobReadStream(file); 
-
-                    var size = 0;
-
-                    blobStream.on('data', function(chunk) {
-                      size += chunk.length;
-                      console.log(Math.floor(size / file.size * 100) + '%');
+                case 'file_transfer_accepted':
+                    // connect to the receiver peer 
+                    var connection = peer.connect(data.payload.receiver_id, { reliable:true });
+                    console.log("S: Connencting to " + data.payload.receiver_id);
+                    connection.on('open', function() {
+                        console.log("S: on open");
+                        peer_file.send(connection, file)
+                            .on('progress', function(bytesSent) {
+                                // TODO: work on progress bar.
+                                console.log("S:" + Math.ceil(bytesSent / file.size * 100));
+                            })
+                            .on('complete', function() {
+                                // TODO: work on progress bar.
+                                console.log("S: upload file completed");
+                            })
                     });
-
-                    blobStream.pipe(stream);
-
-                    //TODO: loading and clean up
-
+                    break;
+                case 'file_transfer_cancelled':
+                    // TODO: work on cancelled transfer dialog.
                     break;
                 default: 
                     console.log("Ops! There is a problem: ", data);
@@ -159,13 +192,13 @@ window.onload = function() {
         var timestamp = ("0" + time.getHours()).slice(-2) + ":" + ("0" + time.getMinutes()).slice(-2) + " " + ampm;
         
         socket.emit('sendMsg', { 
-            id:         clientId, 
-            message:    text, 
+            id:         client_id, 
             sender:     username,
+            message:    text, 
             time:       timestamp
         });
 
-        //reset input text
+        //reset input text value
         $inputText.val("");
     });
 
@@ -296,26 +329,27 @@ window.onload = function() {
             receivers.push(val);
         });
         console
-        socket.emit('fileTransferRequest', { 
+        socket.emit('file_transfer_request', { 
             receivers: receivers,
-            filename: filename,
-            filesize: file.size
+            filename: filename, 
+            filesize: file.size 
         });
     });
 
     $transferAcceptBtn.on('click', function(event) {
         event.preventDefault();
-        socket.emit('fileTransferResponse', {
+        socket.emit('file_transfer_response', {
             accepted:   true,
             sender_id:  $("#sender_id").text(),
             filename:   $("#filename").text(),
-            filesize:   $("#filesize").text()
+            filesize:   $("#filesize").text(),
+            peer_client_id : peer_client_id
         });
     });
 
     $transferCancelBtn.on('click', function(event) {
         event.preventDefault();
-        socket.emit('fileTransferResponse', {
+        socket.emit('file_transfer_response', {
             accepted:   false,
             sender_id:  $("#sender_id").text(),
             filename:   $("#filename").text(),
@@ -339,6 +373,5 @@ window.onload = function() {
     $('.flip').click(function(){
         $(this).find('.card').toggleClass('flipped');
     }); */
-
 
 }
