@@ -103,14 +103,14 @@ var clients = {};
 io.sockets.on('connection', function (socket) {
     console.log('User \"' + socket.client.request.decoded_token.username + '\" connected!');
     console.log("New Socket/Client Id = " + socket.id);
-    
+    console.log("TOKEN : " + util.inspect(socket.client.request._query.token));
     var client = new Client(socket.id, socket.client.request.decoded_token.username);
 
     // saving new client into the clients map
     clients[socket.id] = client;
     
     // send back its data!
-    socket.emit('message', { type: "user_authenticated", payload : client });
+    socket.emit('message', { type: "user_authenticated", payload: client });
     
     console.log("#clients: " + Object.keys(clients).length);
     io.sockets.emit('message', {type: 'user_list', payload: buildUserList() });
@@ -125,17 +125,18 @@ io.sockets.on('connection', function (socket) {
     // coming from the file sender.
     socket.on('file_transfer_request', function (data) {
         console.log("### File Transfer Request ###");
+        console.log("# file sender: " + socket.id + " - username: " + clients[socket.id].username);
         console.log("# filename: " + data.filename);
         console.log("# filesize: " + data.filesize);
-        console.log("# sender: " + socket.id + " - username: " + clients[socket.id].username);
         for(var index in data.receivers)
-            console.log("# receiver: " + data.receivers[index] + " - username: " + clients[data.receivers[index]].username);
+            console.log("# file receiver: " + data.receivers[index] + " - username: " + clients[data.receivers[index]].username);
         
         io.to(data.receivers[index]).emit("message", {
             type: "file_transfer_notification", 
             payload: { 
-                sender_id: socket.id, 
-                sender_username: clients[socket.id].username, 
+                file_sender_id: socket.id, 
+                file_sender_username: clients[socket.id].username, 
+                file_id: data.file_id,
                 filename: data.filename, 
                 filesize: data.filesize 
             }
@@ -145,16 +146,21 @@ io.sockets.on('connection', function (socket) {
     // coming from the possible receiver.
     socket.on('file_transfer_response', function (data) {
         console.log("### File Transfer Response ###");
-        console.log("# receiver: " + socket.id + " - username: " + clients[socket.id].username);
-        console.log("# filename: " + data.filename);
-        console.log("# filesize: " + data.filesize);
+        console.log("# file receiver: " + socket.id + " - username: " + clients[socket.id].username);
+        console.log("# file sender: " +  data.sender_id + " - username: " + clients[data.sender_id].username);
+        console.log("# file id: " + data.file_id);
         console.log("# accepted: " + data.accepted);
-        console.log("# peer_client_id: " + data.peer_client_id);
-        console.log("# request'sender : " +  data.sender_id + " - username: " + clients[data.sender_id].username);
         
         if(data.accepted) {
             // file transfer accepted -> send ack to the file sender.
-            io.to(data.sender_id).emit("message", {type: "file_transfer_accepted", payload: { receiver_id: data.peer_client_id }});
+            io.to(data.sender_id).emit("message", {
+                type: "file_transfer_accepted", 
+                payload: {
+                    receiver_id: socket.id, 
+                    peer_receiver_id: data.peer_client_id,
+                    file_id: data.file_id 
+                }
+            });
         }
         else {
             // 

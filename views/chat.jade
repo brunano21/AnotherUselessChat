@@ -120,13 +120,14 @@ block content
                     span.input-group-btn
                         span.btn.btn-primary.btn-file
                           | Browse…
-                          input(type='file')
+                          input(type='file', id='file_input') 
                     input.form-control(type='text', readonly='')
                 select.selectpicker(id="user-picker", multiple='', data-size='4', data-selected-text-format="count>3", data-live-search="true")
                 button.btn.btn-primary.navbar-btn(id='sendFileBtn', type='button') Send File!
               .face.back
-                .well.well-sm.inner(id="sender_username")
-                span.label.label.info(id="sender_id", style="display:none")
+                .well.well-sm.inner(id="file_sender_username")
+                span.label.label.info(id="file_sender_id", style="display:none")
+                span.label.label.info(id="file_id", style="display:none")
                 span.label.label-default Filename:
                 span.label.label-info(id="filename")
                 br
@@ -135,9 +136,7 @@ block content
                 br
                 button.btn.btn-primary.navbar-btn(id='transferAcceptBtn', type='button') Yep!
                 button.btn.btn-primary.navbar-btn(id='transferCancelBtn', type='button') No!
-                div.progress(style='display:none')
-                  div.progress-bar.progress-bar-striped.active(role='progressbar', aria-valuenow='45', aria-valuemin='0', aria-valuemax='100', style='width: 45%')
-                    span 45%
+                
    
    //nav.navbar-inverse.navbar-fixed-bottom
     //.container-fluid

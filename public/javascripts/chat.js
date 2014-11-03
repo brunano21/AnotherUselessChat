@@ -19,11 +19,9 @@ window.onload = function() {
     var username = null;
     var peer_client_id = null;
 
-    // set when user selects a file.
-    var file = null;
-    var filename = null;
+    // temporary file transfer map    
+    var transfer_file_map = {};
 
-    //var peer = null;
     var peer_file = require('peer-file');
     var peer = null; 
 
@@ -40,8 +38,63 @@ window.onload = function() {
     }
 
 
-    function setupPeer() {
+    function makeid() {
+        var text = "";
+        var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
+        for( var i=0; i < 8; i++ )
+            text += possible.charAt(Math.floor(Math.random() * possible.length));
+        return text;
+    }
+
+    function peerSetup(peer_client_id) {
+        peer = new Peer(peer_client_id, {key: 'wxhelisx5h2xogvi'});
+        peer.on('connection', function(connection) {
+            console.log("R: on connection");
+            connection.on('open', function() {
+                
+                // Receive
+                peer_file.receive(connection)
+                  .on('incoming', function(file) {
+                    console.log("R: incoming file: " + file.name + " (" + file.size + ")");
+                    this.accept(file);
+                  })
+                  .on('progress', function(file, bytesReceived) {
+                    
+                    console.log("R: progress " + Math.ceil(bytesReceived / file.size * 100));
+                  })
+                  .on('complete', function(file) {
+                    console.log("R: complete");
+                    var blob = new Blob(file.data, { type: file.type });
+                    saveAs(blob, file.name);
+                  })
+            });
+        });
+    }
+
+    function sendFile(peer_receiver_id, file_id) {
+        var connection = peer.connect(peer_receiver_id, { reliable:true });
+        console.log("S: Connencting to " + peer_receiver_id);
+        connection.on('open', function() {
+            console.log("S: on open");
+            peer_file.send(connection, transfer_file_map[file_id].file)
+                .on('accept', function() {
+
+                    <div class="progress">
+  <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100" style="width: 45%">
+    <span class="sr-only">45% Complete</span>
+  </div>
+</div>
+                })
+                .on('progress', function(bytesSent) {
+                    // TODO: work on progress bar.
+                    console.log("S:" + Math.ceil(bytesSent / transfer_file_map[file_id].file.size * 100));
+                })
+                .on('complete', function() {
+                    // TODO: work on progress bar.
+                    console.log("S: upload file completed");
+                })
+        });
     }
 
     /*************************
@@ -65,9 +118,9 @@ window.onload = function() {
             if (error.type == "UnauthorizedError" || error.code == "invalid_token") {
                 // redirect user to login page perhaps?
                 console.log("User's token has expired");
-          }
+            }
         });
-
+  
         socket.on('message', function (data) {
             console.log("MSG_TYPE: " + data.type);
             switch(data.type) {
@@ -78,30 +131,10 @@ window.onload = function() {
                     peer_client_id = data.payload.peer_client_id;
                     
                     console.log("clientPeerId: " + peer_client_id);
-                    // create receiver peer for the client.
-                    peer = new Peer(peer_client_id, {key: 'wxhelisx5h2xogvi'});
-                    peer.on('connection', function(connection) {
-                        console.log("R: on connection");
-                        connection.on('open', function() {
-                            
-                            // Receive
-                            peer_file.receive(connection)
-                              .on('incoming', function(file) {
-                                console.log("R: incoming " + file.size);
-                                this.accept(file);
-                              })
-                              .on('progress', function(file, bytesReceived) {
-                                
-                                console.log("R: progress " + Math.ceil(bytesReceived / file.size * 100) + " - " + file.size);
-                              })
-                              .on('complete', function(file) {
-                                console.log("R: complete");
-                                var blob = new Blob(file.data, { type: file.type });
-                                console.log("Size:" + blob.size);
-                                saveAs(blob, "hellodfdsf world.png");
-                              })
-                        });
-                    });
+                    
+                    // setup for receiver peer
+                    peerSetup(peer_client_id);
+                 
                     break;
                 case 'new_message': 
                     if(data.payload.id == client_id) // if the sender is me!
@@ -144,29 +177,18 @@ window.onload = function() {
                     $('#user-picker').selectpicker('refresh');
                     break;
                 case 'file_transfer_notification':
-                    $("#sender_username").text("User " + data.payload.sender_username + " is sending you a file. Accept?");
-                    $("#sender_id").text(data.payload.sender_id);
+                    $("#file_sender_username").text("User " + data.payload.file_sender_username + " is sending you a file. Accept?");
+                    $("#file_sender_id").text(data.payload.file_sender_id);
+                    $("#file_id").text(data.payload.file_id);
                     $("#filename").text(data.payload.filename);
                     $("#filesize").text(bytesToSize(data.payload.filesize));
                     $('.flip').find('.card').toggleClass('flipped');
                     break;
                 case 'file_transfer_accepted':
                     // connect to the receiver peer 
-                    var connection = peer.connect(data.payload.receiver_id, { reliable:true });
-                    console.log("S: Connencting to " + data.payload.receiver_id);
-                    connection.on('open', function() {
-                        console.log("S: on open");
-                        peer_file.send(connection, file)
-                            .on('progress', function(bytesSent) {
-                                // TODO: work on progress bar.
-                                console.log("S:" + Math.ceil(bytesSent / file.size * 100));
-                            })
-                            .on('complete', function() {
-                                // TODO: work on progress bar.
-                                console.log("S: upload file completed");
-                            })
-                    });
-                    break;
+                    sendFile(data.payload.peer_receiver_id, data.payload.file_id);
+                break;
+
                 case 'file_transfer_cancelled':
                     // TODO: work on cancelled transfer dialog.
                     break;
@@ -319,19 +341,30 @@ window.onload = function() {
 
     $sendFileBtn.on('click', function(event) {
         event.preventDefault();
-        if(file == null || $('#user-picker').val().length == 0) {
+        if($("#file_input").prop('files').length == 0 || $('#user-picker').val().length == 0) {
             // TODO: show an alert at least!
             console.log("file or destination user: empty field!!");
             return;
         }
+
         var receivers = [];
         $.each($('#user-picker').val(), function(index, val) {
             receivers.push(val);
         });
-        console
+        
+        var file = $("#file_input").prop('files')[0];
+        var file_id = makeid();
+        
+        transfer_file_map[file_id] = {};
+        transfer_file_map[file_id] = {
+            file: file,
+            receivers: receivers
+        };
+
         socket.emit('file_transfer_request', { 
-            receivers: receivers,
-            filename: filename, 
+            receivers: receivers,   // array containing the connection's socket.id of users
+            file_id : file_id,
+            filename: file.name, 
             filesize: file.size 
         });
     });
@@ -340,11 +373,12 @@ window.onload = function() {
         event.preventDefault();
         socket.emit('file_transfer_response', {
             accepted:   true,
-            sender_id:  $("#sender_id").text(),
-            filename:   $("#filename").text(),
-            filesize:   $("#filesize").text(),
-            peer_client_id : peer_client_id
+            sender_id:  $("#file_sender_id").text(),
+            file_id:    $("#file_id").text(),
+            peer_client_id: peer_client_id
         });
+
+        // setup for peer connection
     });
 
     $transferCancelBtn.on('click', function(event) {
@@ -357,18 +391,12 @@ window.onload = function() {
         });
     });
 
-    // on change listener for imput file
-    $('.btn-file :file').on('change', function(event) {
-        file = event.target.files[0];
-        var input = $(this);
-        filename = input.val().replace(/\\/g, '/').replace(/.*\//, '');
-        input.trigger('fileselect');
+    // on change listener for input file
+    $('#file_input').on('change', function(event) {
+        console.log("Selected file: " + $(this).prop('files')[0].name);
+        $(this).parent().parent().siblings(':text').val($(this).prop('files')[0].name);
     });
 
-    $('.btn-file :file').on('fileselect', function(event) {
-        console.log("Selected file: " + filename);
-        $(this).parent().parent().siblings(':text').val(filename);
-    });
     /*
     $('.flip').click(function(){
         $(this).find('.card').toggleClass('flipped');
