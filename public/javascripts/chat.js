@@ -47,6 +47,15 @@ window.onload = function() {
         return text;
     }
 
+    function hashCode(s){
+        return s.split("").reduce(function(a,b) {a=((a<<5)-a)+b.charCodeAt(0);return a&a},0);              
+    }
+
+    function fileIdGenerator(file) {
+        return hashCode(file.name + file.lastModified + file.type);
+    }
+
+
     function peerSetup(peer_client_id) {
         peer = new Peer(peer_client_id, {key: 'wxhelisx5h2xogvi'});
         peer.on('connection', function(connection) {
@@ -57,6 +66,7 @@ window.onload = function() {
                 peer_file.receive(connection)
                   .on('incoming', function(file) {
                     console.log("R: incoming file: " + file.name + " (" + file.size + ")");
+                    
                     this.accept(file);
                   })
                   .on('progress', function(file, bytesReceived) {
@@ -79,19 +89,27 @@ window.onload = function() {
             console.log("S: on open");
             peer_file.send(connection, transfer_file_map[file_id].file)
                 .on('accept', function() {
+                    $("#transfer_file_progress").append(
+                        '<div id="' + file_id + '" class="progress">' +
+                            '<span class="label label-default"> Filename: </span>' + 
+                            '<span class="label label-info">' + transfer_file_map[file_id].file.name + '</span>' +
+                            '<span class="label label-default"> Size: </span>' + 
+                            '<span class="label label-info">' + bytesToSize(transfer_file_map[file_id].file.size) + '</span>' +
+                            '<div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%">' +
+                                '<span>0%</span>'+
+                            '</div>'+
+                        '</div>'
+                    );
 
-                    <div class="progress">
-  <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100" style="width: 45%">
-    <span class="sr-only">45% Complete</span>
-  </div>
-</div>
                 })
                 .on('progress', function(bytesSent) {
-                    // TODO: work on progress bar.
-                    console.log("S:" + Math.ceil(bytesSent / transfer_file_map[file_id].file.size * 100));
+                    var progress = Math.ceil(bytesSent / transfer_file_map[file_id].file.size * 100);
+                    $('#'+ file_id + '> .progress-bar').css('width', progress+'%').attr('aria-valuenow', progress);
+                    $('#'+ file_id + '> .progress-bar > span').text(progress+'%');
+                    console.log("S: " + progress);
                 })
                 .on('complete', function() {
-                    // TODO: work on progress bar.
+                    $('#'+ file_id + '> .progress-bar').addClass('progress-bar-success');
                     console.log("S: upload file completed");
                 })
         });
@@ -353,7 +371,7 @@ window.onload = function() {
         });
         
         var file = $("#file_input").prop('files')[0];
-        var file_id = makeid();
+        var file_id = "file" + fileIdGenerator(file);
         
         transfer_file_map[file_id] = {};
         transfer_file_map[file_id] = {
