@@ -112,32 +112,17 @@ block content
               button.btn.btn-default(id="sendBtn", type='button') Send!
       .col-xs-6
         .container-fluid
-          .flip
-            .card
-              .face.front
-                form(role='file-form')
-                  .input-group
-                    span.input-group-btn
-                        span.btn.btn-primary.btn-file
-                          | Browse…
-                          input(type='file', id='file_input') 
-                    input.form-control(type='text', readonly='')
-                select.selectpicker(id="user-picker", multiple='', data-size='4', data-selected-text-format="count>3", data-live-search="true")
-                button.btn.btn-primary.navbar-btn(id='sendFileBtn', type='button') Send File!
-              .face.back
-                .well.well-sm.inner(id="file_sender_username")
-                span.label.label.info(id="file_sender_id", style="display:none")
-                span.label.label.info(id="file_id", style="display:none")
-                span.label.label-default Filename:
-                span.label.label-info(id="filename")
-                br
-                span.label.label-default Size: 
-                span.label.label-info(id="filesize")
-                br
-                button.btn.btn-primary.navbar-btn(id='transferAcceptBtn', type='button') Yep!
-                button.btn.btn-primary.navbar-btn(id='transferCancelBtn', type='button') No!
+          form(role='file-form')
+            .input-group
+              span.input-group-btn
+                  span.btn.btn-primary.btn-file
+                    | Browse…
+                    input(type='file', id='file_input') 
+              input.form-control(type='text', readonly='')
+          select.selectpicker(id="user-picker", multiple='', data-size='4', data-selected-text-format="count>3", data-live-search="true")
+          button.btn.btn-primary.navbar-btn(id='sendFileBtn', type='button') Send File!
       .col-xs-6
-        .container-fluid(id="transfer_file_progress")
+        .container-fluid(id="transfer_file_box")
 
    
    //nav.navbar-inverse.navbar-fixed-bottom

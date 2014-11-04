@@ -16,8 +16,8 @@ window.onload = function() {
 
     // user's info. 
     var client_id = null; // Note: client_id == socket.id
-    var username = null;
-    var peer_client_id = null;
+    var client_username = null;
+    var client_peer_id = null;
 
     // temporary file transfer map    
     var transfer_file_map = {};
@@ -56,61 +56,191 @@ window.onload = function() {
     }
 
 
-    function peerSetup(peer_client_id) {
-        peer = new Peer(peer_client_id, {key: 'wxhelisx5h2xogvi'});
+    function peerSetup(peer_id) {
+        peer = new Peer(peer_id, {key: 'wxhelisx5h2xogvi', debug: 3});
         peer.on('connection', function(connection) {
             console.log("R: on connection");
+            console.log(connection.metadata.sender_username); // funziona!!!
             connection.on('open', function() {
                 
                 // Receive
                 peer_file.receive(connection)
-                  .on('incoming', function(file) {
-                    console.log("R: incoming file: " + file.name + " (" + file.size + ")");
-                    
-                    this.accept(file);
-                  })
-                  .on('progress', function(file, bytesReceived) {
-                    
-                    console.log("R: progress " + Math.ceil(bytesReceived / file.size * 100));
-                  })
-                  .on('complete', function(file) {
-                    console.log("R: complete");
-                    var blob = new Blob(file.data, { type: file.type });
-                    saveAs(blob, file.name);
+                    .on('incoming', function(file) {
+                        var self = this;
+                        console.log("R: on incoming:" + file.name + " (" + file.size + ")");
+                        
+                        $("#transfer_file_box").append(
+                            '<div id="' + connection.metadata.file_id + '" class="incoming_file">' +
+                                '<div class="fileinfo">' +
+                                    '<span class="label label-default"> From: ' + connection.metadata.sender_username + '</span>' +
+                                    '<span class="label label-default"> Filename: </span>' + 
+                                    '<span class="label label-info">' + file.name + '</span>' +
+                                    '<span class="label label-default"> Size: </span>' + 
+                                    '<span class="label label-info">' + bytesToSize(file.size) + '</span>' +
+                                '</div>' +
+                                '<div class="filestatus">' + 
+                                    '<span>Incoming</span>' +
+                                '</div>' +
+                                '<div class="fileprogress progress">' +
+                                    '<div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%">' +
+                                        '<span>0%</span>'+
+                                    '</div>' +
+                                '</div>' +
+                                '<div class="filecontrols">' +
+                                    '<div class="accept_reject">' +
+                                        '<button id="accept_btn" type="button" class="btn btn-primary navbar-btn">Yep!</button>' +
+                                        '<button id="reject_btn" type="button" class="btn btn-primary navbar-btn">No!</button>' +
+                                    '</div>' +
+                                    '<div class="pause_resume_cancel">' +
+                                        '<button id="pause_btn" type="button" class="btn btn-primary navbar-btn"><span class="glyphicon glyphicon-pause"></span></button>' +
+                                        '<button id="resume_btn" type="button" class="btn btn-primary navbar-btn" disabled><span class="glyphicon glyphicon-play"></span></button>' +
+                                        '<button id="cancel_btn" type="button" class="btn btn-primary navbar-btn"><span class="glyphicon glyphicon-stop"></span></button>' +
+                                    '</div>' +
+                                '</div>' +
+                            '</div>'
+                        );
+
+                        $("#" + connection.metadata.file_id).find("#accept_btn").on('click', function(event) {
+                            event.preventDefault();
+                            console.log("File:", connection.metadata.file_id, "accepted!");
+                            self.accept(file);
+                            $("#" + connection.metadata.file_id + " > .filestatus > span").text("Downloading...");
+                        });
+                        
+                        $("#" + connection.metadata.file_id).find("#reject_btn").on('click', function(event) {
+                            event.preventDefault();
+                            console.log(connection.metadata.file_id, "rejected!");
+                            self.reject(file); 
+                            $("#" + self.file_id + " > .filestatus > span").text("Rejected!");
+                            setTimeout(function() {$('#' + self.file_id).remove();},3000);   
+                        });
+                        
+                        $("#" + connection.metadata.file_id).find("#resume_btn").on('click', function(event) {
+                            event.preventDefault();
+                            console.log(connection.metadata.file_id, "resumed!");
+                            $("#" + connection.metadata.file_id).find("#resume_btn").prop('disabled', true);
+                            $("#" + connection.metadata.file_id).find("#pause_btn").prop('disabled', false);
+                            self.resume(file);
+                        });
+
+                        $("#" + connection.metadata.file_id).find("#pause_btn").on('click', function(event) {
+                            event.preventDefault();
+                            console.log(connection.metadata.file_id, "paused!");
+                            $("#" + connection.metadata.file_id).find("#pause_btn").prop('disabled', true);
+                            $("#" + connection.metadata.file_id).find("#resume_btn").prop('disabled', false);
+                            self.pause(file);
+                        });
+
+                        $("#" + connection.metadata.file_id).find("#cancel_btn").on('click', function(event) {
+                            event.preventDefault();
+                            console.log(connection.metadata.file_id, "cancelled!");
+                            self.cancel(file);
+                            
+                        });
+                        
+                    })
+                    .on('progress', function(file, bytesReceived) {
+                        var progress = Math.ceil(bytesReceived / file.size * 100);
+                        $('#'+ connection.metadata.file_id + '> .fileprogress > .progress-bar').css('width', progress+'%').attr('aria-valuenow', progress);
+                        $('#'+ connection.metadata.file_id + '> .fileprogress > .progress-bar > span').text(progress+'%');
+                        console.log("R: on progress", progress+'%');
+                    })
+                    .on('cancel', function(file) {
+                        console.log("R: on cancel");
+                        $('#' + connection.metadata.file_id + '> .fileprogress > .progress-bar').addClass('progress-bar-danger');
+                        $("#" + connection.metadata.file_id + '> .filestatus > span').text("Cancelled!");
+                        setTimeout(function() {$('#' + self.file_id).remove();},3000);
+                    })
+                    .on('complete', function(file) {
+                        console.log("R: on complete");
+                        $('#' + connection.metadata.file_id + '> .fileprogress > .progress-bar').addClass('progress-bar-success');
+                        $("#" + connection.metadata.file_id + '> .filestatus > span').text("Completed!");
+                        setTimeout(function() {$('#' + connection.metadata.file_id).remove();},3000);
+                        var blob = new Blob(file.data, { type: file.type });
+                        saveAs(blob, file.name);
                   })
             });
         });
     }
 
     function sendFile(peer_receiver_id, file_id) {
-        var connection = peer.connect(peer_receiver_id, { reliable:true });
-        console.log("S: Connencting to " + peer_receiver_id);
+        var connection = peer.connect(peer_receiver_id, { 
+            reliable: true, 
+            metadata: {
+                sender_username: client_username, 
+                file_id: file_id 
+            }
+        });
+        
+        peer.on('error', function(err) {
+            console.log("Err type:", err.type);
+            console.log(err);
+            // TODO: handle when error's type is 'peer-unavailable'
+        } );
+
+        //TODO: add the receiver username!!
+        $("#transfer_file_box").append(
+            '<div id="' + file_id + '" class="outcoming_file">' +
+                '<div class="fileinfo">' +
+                    '<span class="label label-default"> Filename: </span>' + 
+                    '<span class="label label-info">' + transfer_file_map[file_id].file.name + '</span>' +
+                    '<span class="label label-default"> Size: </span>' + 
+                    '<span class="label label-info">' + bytesToSize(transfer_file_map[file_id].file.size) + '</span>' +
+                '</div>' +
+                '<div class="filestatus">' + 
+                    '<span>Contacting destination user...</span>' +
+                '</div>' +
+                '<div class="fileprogress progress">' +
+                    '<div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%">' +
+                        '<span>0%</span>'+
+                    '</div>'+
+                '</div>'+
+                '<div class="filecontrols">' +
+                    '<div class="accept_reject">' +
+                        '<button id="accept_btn" type="button" class="btn btn-primary navbar-btn">Yep!</button>' +
+                        '<button id="reject_btn" type="button" class="btn btn-primary navbar-btn">No!</button>' +
+                    '</div>' +
+                    '<div class="pause_resume_cancel">' +
+                        '<button id="pause_btn" type="button" class="btn btn-primary navbar-btn"><span class="glyphicon glyphicon-pause"></span></button>' +
+                        '<button id="resume_btn" type="button" class="btn btn-primary navbar-btn" disabled><span class="glyphicon glyphicon-play"></span></button>' +
+                        '<button id="cancel_btn" type="button" class="btn btn-primary navbar-btn"><span class="glyphicon glyphicon-stop"></span></button>' +
+                    '</div>' +
+                '</div>' +
+            '</div>'
+        );
+
+        console.log("S: Try to connenct to " + peer_receiver_id);
         connection.on('open', function() {
             console.log("S: on open");
             peer_file.send(connection, transfer_file_map[file_id].file)
                 .on('accept', function() {
-                    $("#transfer_file_progress").append(
-                        '<div id="' + file_id + '" class="progress">' +
-                            '<span class="label label-default"> Filename: </span>' + 
-                            '<span class="label label-info">' + transfer_file_map[file_id].file.name + '</span>' +
-                            '<span class="label label-default"> Size: </span>' + 
-                            '<span class="label label-info">' + bytesToSize(transfer_file_map[file_id].file.size) + '</span>' +
-                            '<div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%">' +
-                                '<span>0%</span>'+
-                            '</div>'+
-                        '</div>'
-                    );
-
+                    console.log("S: on accept");
+                    $("#" + file_id + " > .filestatus > span").text("Sending...");
+                })
+                .on('reject', function() {
+                    console.log("S: on reject");
+                    $("#" + file_id + " > .filestatus > span").text("Rejected!");
+                    setTimeout(function() {$('#' + file_id).remove();}, 3000);
+                })
+                .on('cancel', function() {
+                     console.log("S: on cancel");
+                    $("#" + file_id + " > .filestatus > span").text("Cancelled!");
+                    setTimeout(function() {$('#' + file_id).remove();}, 3000);
+                })
+                .on('pause', function() {
+                    console.log("PAAAAAAAUSEDDDD");
                 })
                 .on('progress', function(bytesSent) {
                     var progress = Math.ceil(bytesSent / transfer_file_map[file_id].file.size * 100);
-                    $('#'+ file_id + '> .progress-bar').css('width', progress+'%').attr('aria-valuenow', progress);
-                    $('#'+ file_id + '> .progress-bar > span').text(progress+'%');
-                    console.log("S: " + progress);
+                    $('#'+ file_id + '> .fileprogress > .progress-bar').css('width', progress+'%').attr('aria-valuenow', progress);
+                    $('#'+ file_id + '> .fileprogress > .progress-bar > span').text(progress+'%');
+                    console.log("S: on progress:", progress, "%");
                 })
                 .on('complete', function() {
-                    $('#'+ file_id + '> .progress-bar').addClass('progress-bar-success');
-                    console.log("S: upload file completed");
+                    console.log("S: on complete");
+                    $('#' + file_id + ' > .fileprogress > .progress-bar').addClass('progress-bar-success');
+                    $('#' + file_id + ' > .filestatus > span').text("Completed!");
+                    setTimeout(function() {$('#' + file_id).remove();}, 3000);
                 })
         });
     }
@@ -120,7 +250,7 @@ window.onload = function() {
      *************************/
 
     function connect_socket (token) {
-            socket = io.connect(server_address, {
+        socket = io.connect(server_address, {
             query: 'token=' + token
         });
 
@@ -145,7 +275,7 @@ window.onload = function() {
                 case 'user_authenticated': 
                     // saving user data.
                     client_id = data.payload.socket_id;
-                    username = data.payload.username;
+                    client_username = data.payload.username;
                     peer_client_id = data.payload.peer_client_id;
                     
                     console.log("clientPeerId: " + peer_client_id);
@@ -190,25 +320,14 @@ window.onload = function() {
                         else
                             $("#user-picker").append('<option disabled value=\"' + i + '\">' + data.payload[i] + '</option>');
                     }
-
                     // refreshing select-picker
                     $('#user-picker').selectpicker('refresh');
                     break;
-                case 'file_transfer_notification':
-                    $("#file_sender_username").text("User " + data.payload.file_sender_username + " is sending you a file. Accept?");
-                    $("#file_sender_id").text(data.payload.file_sender_id);
-                    $("#file_id").text(data.payload.file_id);
-                    $("#filename").text(data.payload.filename);
-                    $("#filesize").text(bytesToSize(data.payload.filesize));
-                    $('.flip').find('.card').toggleClass('flipped');
-                    break;
-                case 'file_transfer_accepted':
+                case 'peer_receiver_ids_response':
                     // connect to the receiver peer 
-                    sendFile(data.payload.peer_receiver_id, data.payload.file_id);
-                break;
-
-                case 'file_transfer_cancelled':
-                    // TODO: work on cancelled transfer dialog.
+                    console.log(data.payload.peer_receiver_ids);
+                    for(var i in data.payload.peer_receiver_ids)
+                        sendFile(data.payload.peer_receiver_ids[i], data.payload.file_id);
                     break;
                 default: 
                     console.log("Ops! There is a problem: ", data);
@@ -233,7 +352,7 @@ window.onload = function() {
         
         socket.emit('sendMsg', { 
             id:         client_id, 
-            sender:     username,
+            sender:     client_username,
             message:    text, 
             time:       timestamp
         });
@@ -371,7 +490,7 @@ window.onload = function() {
         });
         
         var file = $("#file_input").prop('files')[0];
-        var file_id = "file" + fileIdGenerator(file);
+        var file_id = "file-" + fileIdGenerator(file);
         
         transfer_file_map[file_id] = {};
         transfer_file_map[file_id] = {
@@ -379,33 +498,9 @@ window.onload = function() {
             receivers: receivers
         };
 
-        socket.emit('file_transfer_request', { 
+        socket.emit('peer_receiver_ids_request', { 
             receivers: receivers,   // array containing the connection's socket.id of users
-            file_id : file_id,
-            filename: file.name, 
-            filesize: file.size 
-        });
-    });
-
-    $transferAcceptBtn.on('click', function(event) {
-        event.preventDefault();
-        socket.emit('file_transfer_response', {
-            accepted:   true,
-            sender_id:  $("#file_sender_id").text(),
-            file_id:    $("#file_id").text(),
-            peer_client_id: peer_client_id
-        });
-
-        // setup for peer connection
-    });
-
-    $transferCancelBtn.on('click', function(event) {
-        event.preventDefault();
-        socket.emit('file_transfer_response', {
-            accepted:   false,
-            sender_id:  $("#sender_id").text(),
-            filename:   $("#filename").text(),
-            filesize:   $("#filesize").text() 
+            file_id : file_id
         });
     });
 
