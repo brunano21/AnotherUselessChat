@@ -58,13 +58,23 @@ window.onload = function() {
 
     function peerSetup(peer_id) {
         peer = new Peer(peer_id, {key: 'wxhelisx5h2xogvi', debug: 3});
+        peer.on('close', function() { 
+            console.log('R: on close');
+        });
+        peer.on('disconnected', function() { 
+            console.log('R: on disconnected');
+        });
+        peer.on('error', function(err) { 
+            console.log('R: on error', err);
+        });
+
         peer.on('connection', function(connection) {
             console.log("R: on connection");
-            console.log(connection.metadata.sender_username); // funziona!!!
+            //console.log(connection.metadata.sender_username); // funziona!!!
             connection.on('open', function() {
-                
+                console.log("R: on open");
                 // Receive
-                peer_file.receive(connection)
+                var receiver_handle = peer_file.receive(connection)
                     .on('incoming', function(file) {
                         var self = this;
                         console.log("R: on incoming:" + file.name + " (" + file.size + ")");
@@ -91,10 +101,9 @@ window.onload = function() {
                                         '<button id="accept_btn" type="button" class="btn btn-primary navbar-btn">Yep!</button>' +
                                         '<button id="reject_btn" type="button" class="btn btn-primary navbar-btn">No!</button>' +
                                     '</div>' +
-                                    '<div class="pause_resume_cancel">' +
-                                        '<button id="pause_btn" type="button" class="btn btn-primary navbar-btn"><span class="glyphicon glyphicon-pause"></span></button>' +
-                                        '<button id="resume_btn" type="button" class="btn btn-primary navbar-btn" disabled><span class="glyphicon glyphicon-play"></span></button>' +
-                                        '<button id="cancel_btn" type="button" class="btn btn-primary navbar-btn"><span class="glyphicon glyphicon-stop"></span></button>' +
+                                    '<div class="pause_resume_cancel" style="display:none">' +
+                                        '<button id="pause_resume_btn"  type="button" class="btn btn-primary navbar-btn"><span class="glyphicon glyphicon-pause"></span></button>' +
+                                        '<button id="cancel_btn"        type="button" class="btn btn-primary navbar-btn"><span class="glyphicon glyphicon-stop"></span></button>' +
                                     '</div>' +
                                 '</div>' +
                             '</div>'
@@ -105,6 +114,8 @@ window.onload = function() {
                             console.log("File:", connection.metadata.file_id, "accepted!");
                             self.accept(file);
                             $("#" + connection.metadata.file_id + " > .filestatus > span").text("Downloading...");
+                            $("#" + connection.metadata.file_id).find(".pause_resume_cancel").show();
+                            $("#" + connection.metadata.file_id).find(".accept_reject").hide();
                         });
                         
                         $("#" + connection.metadata.file_id).find("#reject_btn").on('click', function(event) {
@@ -112,53 +123,56 @@ window.onload = function() {
                             console.log(connection.metadata.file_id, "rejected!");
                             self.reject(file); 
                             $("#" + self.file_id + " > .filestatus > span").text("Rejected!");
-                            setTimeout(function() {$('#' + self.file_id).remove();},3000);   
+                            //setTimeout(function() {$('#' + self.file_id).remove();},3000);   
                         });
                         
-                        $("#" + connection.metadata.file_id).find("#resume_btn").on('click', function(event) {
+                        $("#" + connection.metadata.file_id).find("#pause_resume_btn").on('click', function(event) {
                             event.preventDefault();
-                            console.log(connection.metadata.file_id, "resumed!");
-                            $("#" + connection.metadata.file_id).find("#resume_btn").prop('disabled', true);
-                            $("#" + connection.metadata.file_id).find("#pause_btn").prop('disabled', false);
-                            self.resume(file);
-                        });
-
-                        $("#" + connection.metadata.file_id).find("#pause_btn").on('click', function(event) {
-                            event.preventDefault();
-                            console.log(connection.metadata.file_id, "paused!");
-                            $("#" + connection.metadata.file_id).find("#pause_btn").prop('disabled', true);
-                            $("#" + connection.metadata.file_id).find("#resume_btn").prop('disabled', false);
-                            self.pause(file);
+                            console.log("R:", connection.metadata.file_id, "pause - resume!");
+                            
+                            if(($(this)).find('span').hasClass('glyphicon-pause'))
+                                self.pause(file);
+                            else
+                                self.resume(file);
+                            ($(this)).find('span').toggleClass('glyphicon-pause glyphicon-play');
                         });
 
                         $("#" + connection.metadata.file_id).find("#cancel_btn").on('click', function(event) {
                             event.preventDefault();
                             console.log(connection.metadata.file_id, "cancelled!");
                             self.cancel(file);
-                            
                         });
-                        
                     })
                     .on('progress', function(file, bytesReceived) {
                         var progress = Math.ceil(bytesReceived / file.size * 100);
-                        $('#'+ connection.metadata.file_id + '> .fileprogress > .progress-bar').css('width', progress+'%').attr('aria-valuenow', progress);
-                        $('#'+ connection.metadata.file_id + '> .fileprogress > .progress-bar > span').text(progress+'%');
+                        $('#'+ connection.metadata.file_id + ' > .fileprogress > .progress-bar').css('width', progress+'%').attr('aria-valuenow', progress);
+                        $('#'+ connection.metadata.file_id + ' > .fileprogress > .progress-bar > span').text(progress+'%');
                         console.log("R: on progress", progress+'%');
                     })
                     .on('cancel', function(file) {
                         console.log("R: on cancel");
-                        $('#' + connection.metadata.file_id + '> .fileprogress > .progress-bar').addClass('progress-bar-danger');
-                        $("#" + connection.metadata.file_id + '> .filestatus > span').text("Cancelled!");
-                        setTimeout(function() {$('#' + self.file_id).remove();},3000);
+                        $('#' + connection.metadata.file_id + ' > .fileprogress > .progress-bar').addClass('progress-bar-danger');
+                        $("#" + connection.metadata.file_id + ' > .filestatus > span').text("Cancelled!");
+                        //setTimeout(function() {$('#' + self.file_id).remove();},3000);
+                    })
+                    .on('resume', function(file) {
+                        console.log("R: on resume");
+                        $("#" + connection.metadata.file_id).find("#pause_resume_btn").find('span').toggleClass('glyphicon-pause glyphicon-play');
+                        $("#" + connection.metadata.file_id + ' > .filestatus > span').text("Downloading...");
+                    })
+                    .on('pause', function(file) {
+                        console.log("R: on pause");
+                        $("#" + connection.metadata.file_id).find("#pause_resume_btn").find('span').toggleClass('glyphicon-pause glyphicon-play');
+                        $("#" + connection.metadata.file_id + ' > .filestatus > span').text("Paused!");
                     })
                     .on('complete', function(file) {
                         console.log("R: on complete");
-                        $('#' + connection.metadata.file_id + '> .fileprogress > .progress-bar').addClass('progress-bar-success');
-                        $("#" + connection.metadata.file_id + '> .filestatus > span').text("Completed!");
-                        setTimeout(function() {$('#' + connection.metadata.file_id).remove();},3000);
+                        $('#' + connection.metadata.file_id + ' > .fileprogress > .progress-bar').addClass('progress-bar-success');
+                        $("#" + connection.metadata.file_id + ' > .filestatus > span').text("Completed!");
+                        //setTimeout(function() {$('#' + connection.metadata.file_id).remove();},3000);
                         var blob = new Blob(file.data, { type: file.type });
                         saveAs(blob, file.name);
-                  })
+                    });
             });
         });
     }
@@ -173,7 +187,7 @@ window.onload = function() {
         });
         
         peer.on('error', function(err) {
-            console.log("Err type:", err.type);
+            console.log("Error type:", err.type);
             console.log(err);
             // TODO: handle when error's type is 'peer-unavailable'
         } );
@@ -196,14 +210,9 @@ window.onload = function() {
                     '</div>'+
                 '</div>'+
                 '<div class="filecontrols">' +
-                    '<div class="accept_reject">' +
-                        '<button id="accept_btn" type="button" class="btn btn-primary navbar-btn">Yep!</button>' +
-                        '<button id="reject_btn" type="button" class="btn btn-primary navbar-btn">No!</button>' +
-                    '</div>' +
                     '<div class="pause_resume_cancel">' +
-                        '<button id="pause_btn" type="button" class="btn btn-primary navbar-btn"><span class="glyphicon glyphicon-pause"></span></button>' +
-                        '<button id="resume_btn" type="button" class="btn btn-primary navbar-btn" disabled><span class="glyphicon glyphicon-play"></span></button>' +
-                        '<button id="cancel_btn" type="button" class="btn btn-primary navbar-btn"><span class="glyphicon glyphicon-stop"></span></button>' +
+                        '<button id="pause_resume_btn"  type="button" class="btn btn-primary navbar-btn" disabled><span class="glyphicon glyphicon-pause"></span></button>' +
+                        '<button id="cancel_btn"        type="button" class="btn btn-primary navbar-btn"><span class="glyphicon glyphicon-stop"></span></button>' +
                     '</div>' +
                 '</div>' +
             '</div>'
@@ -212,36 +221,66 @@ window.onload = function() {
         console.log("S: Try to connenct to " + peer_receiver_id);
         connection.on('open', function() {
             console.log("S: on open");
-            peer_file.send(connection, transfer_file_map[file_id].file)
+            var sender_handle = peer_file.send(connection, transfer_file_map[file_id].file)
                 .on('accept', function() {
                     console.log("S: on accept");
                     $("#" + file_id + " > .filestatus > span").text("Sending...");
+                    $("#" + file_id).find("#pause_resume_btn").prop('disabled', false);  // Now the button will be clickable!
                 })
                 .on('reject', function() {
                     console.log("S: on reject");
                     $("#" + file_id + " > .filestatus > span").text("Rejected!");
-                    setTimeout(function() {$('#' + file_id).remove();}, 3000);
+                    //setTimeout(function() {$('#' + file_id).remove();}, 3000);
                 })
                 .on('cancel', function() {
-                     console.log("S: on cancel");
+                    console.log("S: on cancel");
                     $("#" + file_id + " > .filestatus > span").text("Cancelled!");
-                    setTimeout(function() {$('#' + file_id).remove();}, 3000);
+                    //setTimeout(function() {$('#' + file_id).remove();}, 3000);
                 })
                 .on('pause', function() {
-                    console.log("PAAAAAAAUSEDDDD");
+                    console.log("S: on pause");
+                    $("#" + file_id + " > .filestatus > span").text("Paused!");
+                    $("#" + file_id).find("#pause_resume_btn").find('span').toggleClass('glyphicon-pause glyphicon-play');
+                })
+                .on('resume', function() {
+                    console.log("S: on resume");
+                    $("#" + file_id + " > .filestatus > span").text("Downloading...");
+                    $("#" + file_id).find("#pause_resume_btn").find('span').toggleClass('glyphicon-pause glyphicon-play');
                 })
                 .on('progress', function(bytesSent) {
                     var progress = Math.ceil(bytesSent / transfer_file_map[file_id].file.size * 100);
-                    $('#'+ file_id + '> .fileprogress > .progress-bar').css('width', progress+'%').attr('aria-valuenow', progress);
-                    $('#'+ file_id + '> .fileprogress > .progress-bar > span').text(progress+'%');
+                    $('#'+ file_id + ' > .fileprogress > .progress-bar').css('width', progress+'%').attr('aria-valuenow', progress);
+                    $('#'+ file_id + ' > .fileprogress > .progress-bar > span').text(progress+'%');
                     console.log("S: on progress:", progress, "%");
                 })
                 .on('complete', function() {
                     console.log("S: on complete");
                     $('#' + file_id + ' > .fileprogress > .progress-bar').addClass('progress-bar-success');
                     $('#' + file_id + ' > .filestatus > span').text("Completed!");
-                    setTimeout(function() {$('#' + file_id).remove();}, 3000);
+                    //setTimeout(function() {$('#' + file_id).remove();}, 3000);
                 })
+            
+            // setting listeners!
+            $("#" + file_id).find("#pause_resume_btn").on('click', function(event) {
+                event.preventDefault();
+                console.log("R:", connection.metadata.file_id, "pause - resume!");
+                if(($(this)).find('span').hasClass('glyphicon-pause')) {
+                    $("#" + file_id + " > .filestatus > span").text("Paused!");
+                    sender_handle.pause();
+                }
+                else {
+                    $("#" + file_id + " > .filestatus > span").text("Downloading...");
+                    sender_handle.resume();
+                }
+                ($(this)).find('span').toggleClass('glyphicon-pause glyphicon-play');
+            });
+
+            $("#" + file_id).find("#cancel_btn").on('click', function(event) {
+                event.preventDefault();
+                console.log(file_id, "cancelled!");
+                sender_handle.cancel();
+            });
+
         });
     }
 
