@@ -1,18 +1,27 @@
 
-var express = require('express');
-var path = require('path');
-var favicon = require('serve-favicon');
-var logger = require('morgan');
+var express     = require('express');
+var path        = require('path');
+var favicon     = require('serve-favicon');
+var logger      = require('morgan');
 var cookieParser = require('cookie-parser');
-var bodyParser = require('body-parser');
-var mongoose = require('mongoose');
-var util = require('util');
-var fs = require('fs');
-
-var ss = require('socket.io-stream');
-
+var bodyParser  = require('body-parser');
+var fs          = require('fs');
+var mongoose    = require('mongoose');
+var util        = require('util');
 var socketioJwt = require('socketio-jwt');
+
+// secret for socketioJwt - json web token
 var jwtSecret = 'AyM1SysPpbyDfgZld3umj1qzKObwVMkoqQ-EstJQLr_T-1qS0gZH75aKtMN3Yj0iPS4hcgUuTwjAzZr1Z9CAow';
+
+
+// FOR HTTPS SERVER
+/*
+var https = require('https');
+var options = {
+    key: fs.readFileSync('test/keys/key.pem'),
+    cert: fs.readFileSync('test/keys/key-cert.pem')
+};
+*/
 
 var mongodb_address = 'mongodb://localhost/chatlan';
 
@@ -74,15 +83,10 @@ app.use(function(err, req, res, next) {
     });
 });
 
-
-// load all files in model dir (for MongoDB)
-/*fs.readdirSync(__dirname + '/models').forEach(function(filename) {
-    if(~filename.indexOf('.js'))
-        require(__dirname + '/models/' + filename); 
-});
-*/
 var debug = require('debug')('generated-express-app');
 app.set('port', process.env.PORT || 3000);
+
+//var server = https.createServer(options, app).listen(443);
 
 var server = app.listen(app.get('port'), function() {
     debug('Express server listening on port ' + server.address().port);
@@ -96,6 +100,8 @@ io.set('authorization', socketioJwt.authorize({
     secret: jwtSecret,
     handshake: true
 }));
+
+
 
 // connected clients map
 var clients = {};

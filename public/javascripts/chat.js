@@ -1,8 +1,8 @@
 window.onload = function() {
 
     //var server_address = 'http://br1srpi.crabdance.com:3000';
-    var server_address = 'http://192.168.0.8:3000';
-    //var server_address = 'http://localhost:3000';
+    var server_address = 'http://192.168.0.9:3000';
+    //var server_address = 'http://br1srpi.crabdance.com:3000';
 
     var socket;
     var $inputText = $("#inputText");
@@ -296,7 +296,7 @@ window.onload = function() {
         socket.on('connect', function () {
             console.log('authenticated');
         });
-
+        
         socket.on('disconnect', function () {
             console.log('disconnected');
         });

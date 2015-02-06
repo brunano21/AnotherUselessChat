@@ -11,13 +11,19 @@ block content
             span.sr-only Close
           h4#myModalLabel.modal-title Sign In
         .modal-body(id='signInDataForm')
-          .input-group
-            span.input-group-addon.glyphicon.glyphicon-user
-            input.form-control(id='signInEmail', name='email', type='text', placeholder='email')
-          br
-          .input-group
-            span.input-group-addon.glyphicon.glyphicon-user
-            input.form-control(id='signInPassword', name='password', type='password', placeholder='password')
+          form(role="form")
+            .input-group
+              span.input-group-addon.glyphicon.glyphicon-user
+              input.form-control(id='signInEmail', name='email', type='text', placeholder='email')
+            br
+            .input-group
+              span.input-group-addon.glyphicon.glyphicon-user
+              input.form-control(id='signInPassword', name='password', type='password', placeholder='password')
+            br
+            .checkbox
+              label
+                input(type='checkbox')
+                | Remember me
         .modal-footer
           button.btn.btn-default.navbar-left(id='signUpBtn' type='button', data-toggle='modal', data-target='#signUpModal') Sign Up!
           button.btn.btn-primary.navbar-right(id='sendDataSignInBtn', type='button') Sign In
