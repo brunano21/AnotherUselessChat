@@ -187,3 +187,5 @@ function peerIdGenerator() {
         text += possible.charAt(Math.floor(Math.random() * possible.length));
     return text;
 }
+
+// comment for test!
